@@ -37,6 +37,7 @@ func buildApp(w io.Writer) *cli.Command {
 		ExitErrHandler: func(ctx context.Context, cmd *cli.Command, err error) {
 			// Don't call os.Exit, just let the error propagate
 		},
+		Action: catchallAction,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "plc-host",
@@ -49,4 +50,49 @@ func buildApp(w io.Writer) *cli.Command {
 			cmdAccount,
 		}, buildProxyCommands()...),
 	}
+}
+
+// catchallAction handles the root command invocation.
+// If args look like an unknown subcommand, proxy them to bd.
+// Otherwise, show help.
+func catchallAction(ctx context.Context, cmd *cli.Command) error {
+	args := cmd.Args().Slice()
+
+	// No args — show help
+	if len(args) == 0 {
+		return cli.ShowAppHelp(cmd)
+	}
+
+	// If first arg starts with "-", it's a flag — show help
+	if len(args[0]) > 0 && args[0][0] == '-' {
+		return cli.ShowAppHelp(cmd)
+	}
+
+	// Looks like an unknown subcommand — proxy to bd with auth
+	sess, err := requireAuth()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return err
+	}
+
+	// Inject assignee and forward to bd
+	bdArgs := injectAssignee(args, sess.Handle)
+
+	stdout, stderr, exitCode, err := runBd(ctx, bdArgs)
+	if err != nil {
+		return err
+	}
+
+	if len(stdout) > 0 {
+		_, _ = cmd.Root().Writer.Write(stdout)
+	}
+	if len(stderr) > 0 {
+		_, _ = os.Stderr.Write(stderr)
+	}
+
+	if exitCode != 0 {
+		return fmt.Errorf("hb %s failed with exit code %d", args[0], exitCode)
+	}
+
+	return nil
 }
