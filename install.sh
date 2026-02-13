@@ -44,19 +44,21 @@ detect_platform() {
 }
 
 # --- Get latest release tag ---
+# Returns 0 if a version was found, 1 otherwise (so caller can fall back).
 get_latest_version() {
   if command -v curl &>/dev/null; then
-    VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
+    VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' || true)"
   elif command -v wget &>/dev/null; then
-    VERSION="$(wget -qO- "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
+    VERSION="$(wget -qO- "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' || true)"
   else
     fail "curl or wget required"
   fi
 
-  [ -z "$VERSION" ] && fail "Could not determine latest version"
+  [ -n "$VERSION" ]
 }
 
-# --- Download and install ---
+# --- Download and install binary from GitHub release ---
+# Returns 0 on success, 1 on failure (so caller can fall back to source).
 install_binary() {
   TARBALL="${BINARY}_${VERSION#v}_${OS}_${ARCH}.tar.gz"
   URL="https://github.com/${REPO}/releases/download/${VERSION}/${TARBALL}"
@@ -67,13 +69,13 @@ install_binary() {
   info "Downloading hb ${VERSION} for ${OS}/${ARCH}..."
 
   if command -v curl &>/dev/null; then
-    curl -fsSL "$URL" -o "${TMPDIR}/${TARBALL}" || fail "Download failed. Check https://github.com/${REPO}/releases for available binaries."
+    curl -fsSL "$URL" -o "${TMPDIR}/${TARBALL}" 2>/dev/null || return 1
   else
-    wget -q "$URL" -O "${TMPDIR}/${TARBALL}" || fail "Download failed. Check https://github.com/${REPO}/releases for available binaries."
+    wget -q "$URL" -O "${TMPDIR}/${TARBALL}" 2>/dev/null || return 1
   fi
 
   info "Extracting..."
-  tar -xzf "${TMPDIR}/${TARBALL}" -C "$TMPDIR"
+  tar -xzf "${TMPDIR}/${TARBALL}" -C "$TMPDIR" || return 1
 
   mkdir -p "$INSTALL_DIR"
   mv "${TMPDIR}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
@@ -123,9 +125,9 @@ main() {
 
   detect_platform
 
-  # Try release binary first, fall back to source
-  if get_latest_version 2>/dev/null; then
-    install_binary 2>/dev/null || install_from_source
+  # Try release binary first, fall back to building from source
+  if get_latest_version && install_binary; then
+    : # binary installed successfully
   else
     install_from_source
   fi
