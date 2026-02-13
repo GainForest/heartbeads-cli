@@ -3,7 +3,7 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 
 build:
-	go build -ldflags="-s -w -X main.Version=$(VERSION)" -o hb .
+	go build -ldflags="-s -w -X main.Version=$(VERSION)" -o hb ./cmd/hb
 
 test:
 	go test ./...
