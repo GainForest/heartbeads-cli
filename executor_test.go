@@ -102,6 +102,11 @@ func TestRewriteOutput(t *testing.T) {
 			input: `[{"title":"fix bd bug"}]`,
 			want:  `[{"title":"fix bd bug"}]`,
 		},
+		{
+			name:  "path-prefixed bd",
+			input: "BEADS_DB=/tmp/test.db ./bd create",
+			want:  "BEADS_DB=/tmp/test.db ./hb create",
+		},
 	}
 
 	for _, tt := range tests {

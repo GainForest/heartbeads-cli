@@ -31,6 +31,9 @@ var rewritePatterns = []struct {
 	{regexp.MustCompile("'bd "), "'hb "},
 	{regexp.MustCompile("'bd'"), "'hb'"},
 
+	// Path-prefixed: ./bd → ./hb
+	{regexp.MustCompile(`\./bd `), "./hb "},
+
 	// Markdown bold: **bd** → **hb**
 	{regexp.MustCompile(`\*\*bd\*\*`), "**hb**"},
 
