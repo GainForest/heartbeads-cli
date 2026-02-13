@@ -37,5 +37,16 @@ func buildApp(w io.Writer) *cli.Command {
 		ExitErrHandler: func(ctx context.Context, cmd *cli.Command, err error) {
 			// Don't call os.Exit, just let the error propagate
 		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "plc-host",
+				Usage:   "PLC directory URL",
+				Value:   "https://plc.directory",
+				Sources: cli.EnvVars("ATP_PLC_HOST"),
+			},
+		},
+		Commands: []*cli.Command{
+			cmdAccount,
+		},
 	}
 }
