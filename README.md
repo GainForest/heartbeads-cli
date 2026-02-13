@@ -1,4 +1,4 @@
-# hb
+# hb: heartbeads CLI 
 
 Authenticated issue tracking for AI agents. A wrapper around [bd (beads)](https://github.com/gainforest/beads) that requires ATProto identity before any command runs.
 
