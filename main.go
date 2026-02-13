@@ -69,29 +69,5 @@ func catchallAction(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Looks like an unknown subcommand — proxy to bd with auth
-	sess, err := requireAuth()
-	if err != nil {
-		return err
-	}
-
-	// Inject flags and forward to bd
-	bdArgs := injectFlags(args, sess.Handle)
-
-	stdout, stderr, exitCode, err := runBd(ctx, bdArgs)
-	if err != nil {
-		return err
-	}
-
-	if len(stdout) > 0 {
-		_, _ = cmd.Root().Writer.Write(stdout)
-	}
-	if len(stderr) > 0 {
-		_, _ = os.Stderr.Write(stderr)
-	}
-
-	if exitCode != 0 {
-		return fmt.Errorf("hb %s failed with exit code %d", args[0], exitCode)
-	}
-
-	return nil
+	return execBd(ctx, cmd.Root().Writer, args)
 }

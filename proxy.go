@@ -3,24 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/urfave/cli/v3"
 )
 
-// proxyAction is the unified action for all proxied bd commands.
-// It checks auth, builds args with assignee injection, and delegates to bd.
-func proxyAction(ctx context.Context, cmd *cli.Command) error {
+// execBd authenticates, injects flags, runs bd, and writes output.
+// Returns an error if auth fails, bd fails to execute, or exits non-zero.
+func execBd(ctx context.Context, w io.Writer, args []string) error {
 	sess, err := requireAuth()
 	if err != nil {
 		return err
 	}
 
-	// Build the bd command args: subcommand name + all remaining args
-	args := []string{cmd.Name}
-	args = append(args, cmd.Args().Slice()...)
-
-	// Auto-inject flags (actor, assignee, reason, session) from logged-in handle
 	args = injectFlags(args, sess.Handle)
 
 	stdout, stderr, exitCode, err := runBd(ctx, args)
@@ -28,19 +24,25 @@ func proxyAction(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	// Write output
 	if len(stdout) > 0 {
-		_, _ = cmd.Root().Writer.Write(stdout)
+		_, _ = w.Write(stdout)
 	}
 	if len(stderr) > 0 {
 		_, _ = os.Stderr.Write(stderr)
 	}
 
 	if exitCode != 0 {
-		return fmt.Errorf("hb %s failed with exit code %d", cmd.Name, exitCode)
+		return fmt.Errorf("hb %s failed with exit code %d", args[0], exitCode)
 	}
 
 	return nil
+}
+
+// proxyAction is the unified action for all proxied bd commands.
+// It checks auth, builds args with assignee injection, and delegates to bd.
+func proxyAction(ctx context.Context, cmd *cli.Command) error {
+	args := append([]string{cmd.Name}, cmd.Args().Slice()...)
+	return execBd(ctx, cmd.Root().Writer, args)
 }
 
 // buildProxyCommands returns cli.Command entries for common bd commands.

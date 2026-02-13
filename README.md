@@ -8,7 +8,7 @@ Authenticated beads CLI for AI agents.
 
 Key features:
 - **Auth required**: agents must login with `hb account login` before running any commands
-- **Auto-assignee**: every `create`, `update`, `close`, and `q` command automatically injects `--assignee` set to the logged-in ATProto handle
+- **Auto-identity**: `--actor` injected on all commands (sets created_by), `--assignee` on `update` only, `--reason` from git on `close`, `--session` from env on `close`/`update`
 - **Transparent proxy**: all bd commands work through hb — output is rewritten so agents never see "bd"
 
 ## Prerequisites
@@ -60,7 +60,7 @@ hb sync
 1. **Auth layer**: `hb` stores ATProto session in `~/.local/state/heartbeads/auth-session.json` (XDG state dir)
 2. **Proxy**: all commands are forwarded to `bd` with `BD_NAME=hb` environment variable
 3. **Output rewriting**: stdout/stderr text is post-processed to replace "bd" references with "hb"
-4. **Assignee injection**: on ownership-relevant commands, `--assignee <atproto-handle>` is appended automatically
+4. **Flag injection**: `--actor` on all commands, `--assignee` on `update`, `--reason` (from latest git commit) on `close`, `--session` (from `CLAUDE_SESSION_ID`/`OPENCODE_SESSION` env) on `close`/`update`
 
 ## Commands
 
