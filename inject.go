@@ -70,8 +70,9 @@ func injectFlags(args []string, handle string) []string {
 		result = append(result, "--actor", handle)
 	}
 
-	// --assignee (create, update ONLY) — only if handle is non-empty and not already present
-	if handle != "" && (subcommand == "create" || subcommand == "update") && !hasFlag(result, "--assignee", "-a") {
+	// --assignee (update ONLY) — only if handle is non-empty and not already present
+	// NOT on create: auto-assignee breaks "update --claim" on newly created issues
+	if handle != "" && subcommand == "update" && !hasFlag(result, "--assignee", "-a") {
 		result = append(result, "--assignee", handle)
 	}
 
