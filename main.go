@@ -75,8 +75,8 @@ func catchallAction(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	// Inject assignee and forward to bd
-	bdArgs := injectAssignee(args, sess.Handle)
+	// Inject flags and forward to bd
+	bdArgs := injectFlags(args, sess.Handle)
 
 	stdout, stderr, exitCode, err := runBd(ctx, bdArgs)
 	if err != nil {

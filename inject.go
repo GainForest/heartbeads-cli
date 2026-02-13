@@ -91,10 +91,3 @@ func injectFlags(args []string, handle string) []string {
 
 	return result
 }
-
-// injectAssignee is a temporary stub for backward compatibility.
-// This will be removed in task heartbeads-cli-96h.3 when proxy.go and main.go
-// are updated to call injectFlags instead.
-func injectAssignee(args []string, handle string) []string {
-	return injectFlags(args, handle)
-}

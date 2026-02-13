@@ -21,8 +21,8 @@ func proxyAction(ctx context.Context, cmd *cli.Command) error {
 	args := []string{cmd.Name}
 	args = append(args, cmd.Args().Slice()...)
 
-	// Auto-inject assignee from logged-in handle
-	args = injectAssignee(args, sess.Handle)
+	// Auto-inject flags (actor, assignee, reason, session) from logged-in handle
+	args = injectFlags(args, sess.Handle)
 
 	stdout, stderr, exitCode, err := runBd(ctx, args)
 	if err != nil {
