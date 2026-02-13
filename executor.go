@@ -27,6 +27,10 @@ var rewritePatterns = []struct {
 	{regexp.MustCompile("`bd "), "`hb "},
 	{regexp.MustCompile("`bd`"), "`hb`"},
 
+	// Single-quoted commands: 'bd foo' → 'hb foo'
+	{regexp.MustCompile("'bd "), "'hb "},
+	{regexp.MustCompile("'bd'"), "'hb'"},
+
 	// Markdown bold: **bd** → **hb**
 	{regexp.MustCompile(`\*\*bd\*\*`), "**hb**"},
 
