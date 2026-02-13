@@ -19,7 +19,7 @@ func execBd(ctx context.Context, w io.Writer, args []string) error {
 
 	args = injectFlags(args, sess.Handle)
 
-	stdout, stderr, exitCode, err := runBd(ctx, args)
+	stdout, stderr, exitCode, err := runBd(ctx, args, sess.Handle)
 	if err != nil {
 		return err
 	}

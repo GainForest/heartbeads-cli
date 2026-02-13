@@ -81,7 +81,7 @@ func rewriteOutput(input []byte) []byte {
 // runBd executes the bd binary with the given arguments, setting BD_NAME=hb
 // and applying output rewriting. Returns rewritten stdout, stderr, exit code,
 // and any execution error.
-func runBd(ctx context.Context, args []string, extraEnv ...string) (stdout []byte, stderr []byte, exitCode int, err error) {
+func runBd(ctx context.Context, args []string, handle string, extraEnv ...string) (stdout []byte, stderr []byte, exitCode int, err error) {
 	bdPath, err := findBdBinary()
 	if err != nil {
 		return nil, nil, 1, err
@@ -92,6 +92,18 @@ func runBd(ctx context.Context, args []string, extraEnv ...string) (stdout []byt
 	// Inherit env and add BD_NAME=hb
 	cmd.Env = append(os.Environ(), "BD_NAME=hb")
 	cmd.Env = append(cmd.Env, extraEnv...)
+
+	// Fallback: if GIT_AUTHOR_EMAIL is not set, use ATProto handle
+	// so bd's owner field has a value even without git config
+	if handle != "" && os.Getenv("GIT_AUTHOR_EMAIL") == "" {
+		cmd.Env = append(cmd.Env, "GIT_AUTHOR_EMAIL="+handle)
+	}
+
+	// Fallback: set BD_ACTOR as belt-and-suspenders for created_by
+	// (--actor flag is already injected, but this covers edge cases)
+	if handle != "" && os.Getenv("BD_ACTOR") == "" {
+		cmd.Env = append(cmd.Env, "BD_ACTOR="+handle)
+	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf

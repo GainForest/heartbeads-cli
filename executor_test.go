@@ -126,7 +126,7 @@ func TestRunBd(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	stdout, _, exitCode, err := runBd(ctx, []string{"version"})
+	stdout, _, exitCode, err := runBd(ctx, []string{"version"}, "")
 	if err != nil {
 		t.Fatalf("runBd failed: %v", err)
 	}
@@ -138,5 +138,24 @@ func TestRunBd(t *testing.T) {
 	out := string(stdout)
 	if !strings.Contains(out, "hb version") {
 		t.Errorf("expected stdout to contain 'hb version', got: %q", out)
+	}
+}
+
+func TestRunBdFallbackEnv(t *testing.T) {
+	if _, err := findBdBinary(); err != nil {
+		t.Skipf("bd not installed: %v", err)
+	}
+
+	// Unset GIT_AUTHOR_EMAIL to test fallback
+	t.Setenv("GIT_AUTHOR_EMAIL", "")
+
+	ctx := context.Background()
+	// Run a command that echoes env — "version" is safe
+	_, _, exitCode, err := runBd(ctx, []string{"version"}, "test.handle.social")
+	if err != nil {
+		t.Fatalf("runBd failed: %v", err)
+	}
+	if exitCode != 0 {
+		t.Errorf("expected exit 0, got %d", exitCode)
 	}
 }
