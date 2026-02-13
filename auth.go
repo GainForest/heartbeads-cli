@@ -123,10 +123,6 @@ func loadAuthClient(ctx context.Context) (*atclient.APIClient, error) {
 	}
 
 	// Otherwise try new auth session using saved password
-	plcHost := os.Getenv("ATP_PLC_HOST")
-	if plcHost == "" {
-		plcHost = "https://plc.directory"
-	}
 	dir := configDirectory()
 	return atclient.LoginWithPassword(ctx, dir, sess.DID.AtIdentifier(), sess.Password, "", authRefreshCallback)
 }
