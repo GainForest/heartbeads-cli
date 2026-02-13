@@ -96,8 +96,8 @@ func authRefreshCallback(ctx context.Context, data atclient.PasswordSessionData)
 	}
 }
 
-// configDirectory returns an identity directory for the given PLC host
-func configDirectory(_ string) identity.Directory {
+// configDirectory returns an identity directory
+func configDirectory() identity.Directory {
 	return identity.DefaultDirectory()
 }
 
@@ -127,7 +127,7 @@ func loadAuthClient(ctx context.Context) (*atclient.APIClient, error) {
 	if plcHost == "" {
 		plcHost = "https://plc.directory"
 	}
-	dir := configDirectory(plcHost)
+	dir := configDirectory()
 	return atclient.LoginWithPassword(ctx, dir, sess.DID.AtIdentifier(), sess.Password, "", authRefreshCallback)
 }
 

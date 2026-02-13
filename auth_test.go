@@ -152,21 +152,9 @@ func TestWipeAuthSession(t *testing.T) {
 }
 
 func TestConfigDirectory(t *testing.T) {
-	tests := []struct {
-		name    string
-		plcHost string
-	}{
-		{name: "default plc host", plcHost: ""},
-		{name: "custom plc host", plcHost: "https://plc.example.com"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dir := configDirectory(tt.plcHost)
-			if dir == nil {
-				t.Fatal("configDirectory returned nil")
-			}
-		})
+	dir := configDirectory()
+	if dir == nil {
+		t.Fatal("configDirectory returned nil")
 	}
 }
 

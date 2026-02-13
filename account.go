@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
@@ -70,8 +71,7 @@ func runAccountLogin(ctx context.Context, cmd *cli.Command) error {
 		if parseErr != nil {
 			return fmt.Errorf("invalid username: %w", parseErr)
 		}
-		plcHost := cmd.Root().String("plc-host")
-		dir := configDirectory(plcHost)
+		dir := configDirectory()
 		client, err = atclient.LoginWithPassword(ctx, dir, atid, password, "", authRefreshCallback)
 	}
 	if err != nil {
@@ -116,7 +116,7 @@ func runAccountLogout(ctx context.Context, cmd *cli.Command) error {
 
 func runAccountStatus(ctx context.Context, cmd *cli.Command) error {
 	client, err := loadAuthClient(ctx)
-	if err == ErrNoAuthSession {
+	if errors.Is(err, ErrNoAuthSession) {
 		return fmt.Errorf("not logged in (run: hb account login)")
 	}
 	if err != nil {
