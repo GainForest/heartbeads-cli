@@ -1,6 +1,6 @@
-# Binary
-hb
-hb.exe
+# Binary (root level only)
+/hb
+/hb.exe
 
 # Test/coverage
 coverage.out
