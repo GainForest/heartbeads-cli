@@ -61,6 +61,12 @@ func rewriteOutput(input []byte) []byte {
 		return input
 	}
 
+	// Don't rewrite JSON output — it contains user data that should be preserved
+	trimmed := bytes.TrimLeft(input, " \t\n\r")
+	if len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
+		return input
+	}
+
 	result := string(input)
 	for _, p := range rewritePatterns {
 		result = p.re.ReplaceAllString(result, p.repl)

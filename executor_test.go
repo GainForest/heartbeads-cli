@@ -92,6 +92,16 @@ func TestRewriteOutput(t *testing.T) {
 			input: "see bd-abc123 for details",
 			want:  "see bd-abc123 for details",
 		},
+		{
+			name:  "JSON output preserved",
+			input: `{"close_reason":"fix bd rewriting"}`,
+			want:  `{"close_reason":"fix bd rewriting"}`,
+		},
+		{
+			name:  "JSON array preserved",
+			input: `[{"title":"fix bd bug"}]`,
+			want:  `[{"title":"fix bd bug"}]`,
+		},
 	}
 
 	for _, tt := range tests {
