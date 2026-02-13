@@ -2,6 +2,7 @@ package inject
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -125,6 +126,136 @@ func TestGetLatestGitCommit(t *testing.T) {
 	}
 }
 
+func TestGetFlagValue(t *testing.T) {
+	tests := []struct {
+		name  string
+		args  []string
+		flags []string
+		want  string
+	}{
+		{
+			name:  "--flag value form",
+			args:  []string{"close", "bd-123", "--reason", "a1b2c3d fix bug"},
+			flags: []string{"--reason", "-r"},
+			want:  "a1b2c3d fix bug",
+		},
+		{
+			name:  "-r short form",
+			args:  []string{"close", "bd-123", "-r", "a1b2c3d fix bug"},
+			flags: []string{"--reason", "-r"},
+			want:  "a1b2c3d fix bug",
+		},
+		{
+			name:  "--flag=value form",
+			args:  []string{"close", "bd-123", "--reason=a1b2c3d fix bug"},
+			flags: []string{"--reason", "-r"},
+			want:  "a1b2c3d fix bug",
+		},
+		{
+			name:  "flag not present",
+			args:  []string{"close", "bd-123"},
+			flags: []string{"--reason", "-r"},
+			want:  "",
+		},
+		{
+			name:  "flag at end with no value",
+			args:  []string{"close", "bd-123", "--reason"},
+			flags: []string{"--reason", "-r"},
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetFlagValue(tt.args, tt.flags...)
+			if got != tt.want {
+				t.Errorf("GetFlagValue(%v, %v) = %q, want %q", tt.args, tt.flags, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRequireReason(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "close without --reason fails",
+			args:    []string{"close", "bd-123"},
+			wantErr: true,
+			errMsg:  "hb close requires --reason",
+		},
+		{
+			name:    "close with valid --reason passes",
+			args:    []string{"close", "bd-123", "--reason", "a1b2c3d fix the login timeout"},
+			wantErr: false,
+		},
+		{
+			name:    "close with valid -r passes",
+			args:    []string{"close", "bd-123", "-r", "abcdef0 refactor auth module"},
+			wantErr: false,
+		},
+		{
+			name:    "close with --reason=value passes",
+			args:    []string{"close", "bd-123", "--reason=a1b2c3d fix bug"},
+			wantErr: false,
+		},
+		{
+			name:    "close with bad format (no hash) fails",
+			args:    []string{"close", "bd-123", "--reason", "just some text"},
+			wantErr: true,
+			errMsg:  "invalid --reason format",
+		},
+		{
+			name:    "close with hash only (no message) fails",
+			args:    []string{"close", "bd-123", "--reason", "a1b2c3d"},
+			wantErr: true,
+			errMsg:  "invalid --reason format",
+		},
+		{
+			name:    "close with short hash (6 chars) fails",
+			args:    []string{"close", "bd-123", "--reason", "a1b2c3 too short"},
+			wantErr: true,
+			errMsg:  "invalid --reason format",
+		},
+		{
+			name:    "non-close command always passes",
+			args:    []string{"update", "bd-123", "--status", "done"},
+			wantErr: false,
+		},
+		{
+			name:    "empty args passes",
+			args:    []string{},
+			wantErr: false,
+		},
+		{
+			name:    "create without --reason passes",
+			args:    []string{"create", "new task"},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := RequireReason(tt.args)
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("RequireReason(%v) = nil, want error containing %q", tt.args, tt.errMsg)
+				} else if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("RequireReason(%v) error = %q, want to contain %q", tt.args, err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("RequireReason(%v) = %v, want nil", tt.args, err)
+				}
+			}
+		})
+	}
+}
+
 func TestInjectFlags(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -159,21 +290,21 @@ func TestInjectFlags(t *testing.T) {
 			wantAssigneeValue: "alice.bsky.social",
 		},
 		{
-			name:           "close gets actor, reason, NO assignee",
+			name:           "close gets actor, NO assignee, NO auto-reason",
 			args:           []string{"close", "bd-123"},
 			handle:         "alice.bsky.social",
 			wantActor:      true,
 			wantAssignee:   false,
-			wantReason:     true,
+			wantReason:     false, // reason is never auto-injected
 			wantActorValue: "alice.bsky.social",
 		},
 		{
-			name:           "close with explicit --reason not doubled",
-			args:           []string{"close", "bd-123", "--reason", "manual"},
+			name:           "close with explicit --reason preserved",
+			args:           []string{"close", "bd-123", "--reason", "a1b2c3d fix bug"},
 			handle:         "alice.bsky.social",
 			wantActor:      true,
 			wantAssignee:   false,
-			wantReason:     false, // already present, so NOT injected
+			wantReason:     false, // not injected, but user-provided is preserved
 			wantActorValue: "alice.bsky.social",
 		},
 		{
@@ -216,7 +347,7 @@ func TestInjectFlags(t *testing.T) {
 			claudeSessionID:  "sess-1",
 			wantActor:        true,
 			wantAssignee:     false,
-			wantReason:       true,
+			wantReason:       false, // reason is never auto-injected
 			wantSession:      true,
 			wantActorValue:   "alice.bsky.social",
 			wantSessionValue: "sess-1",
@@ -228,7 +359,7 @@ func TestInjectFlags(t *testing.T) {
 			claudeSessionID:  "sess-1",
 			wantActor:        true,
 			wantAssignee:     false,
-			wantReason:       true,
+			wantReason:       false, // reason is never auto-injected
 			wantSession:      false, // already present, so NOT injected
 			wantActorValue:   "alice.bsky.social",
 			wantSessionValue: "mine",

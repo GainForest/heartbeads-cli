@@ -15,11 +15,11 @@ hb account login --username <your-handle> --password <app-password>
 hb ready              # Find available work
 hb show <id>          # View issue details
 hb update <id> --status in_progress  # Claim work
-hb close <id>         # Complete work
+hb close <id> --reason "<commit-hash> <message>"  # Complete work (reason required)
 hb sync               # Sync with git
 ```
 
-Note: hb automatically sets --assignee to your ATProto handle on create, update, and close commands.
+Note: hb automatically sets --actor and --assignee (on update) to your ATProto handle. `hb close` requires `--reason` with a commit reference (`"<hash> <message>"`).
 
 ## Session Completion
 

@@ -1,8 +1,10 @@
 package inject
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -44,18 +46,57 @@ func GetSessionID() string {
 	return os.Getenv("OPENCODE_SESSION")
 }
 
-// InjectFlags appends flags (actor, assignee, reason, session) to args based
+// GetFlagValue extracts the value of a flag from args.
+// Handles both "--flag value" and "--flag=value" forms.
+// Returns "" if the flag is not found or has no value.
+func GetFlagValue(args []string, flags ...string) string {
+	for i, arg := range args {
+		for _, flag := range flags {
+			// --flag=value form
+			if strings.HasPrefix(arg, flag+"=") {
+				return strings.TrimPrefix(arg, flag+"=")
+			}
+			// --flag value form (next arg is the value)
+			if arg == flag && i+1 < len(args) {
+				return args[i+1]
+			}
+		}
+	}
+	return ""
+}
+
+// reasonPattern matches "<7+ hex chars> <message>" — a git commit hash followed by text.
+var reasonPattern = regexp.MustCompile(`^[0-9a-f]{7,40}\s+.+`)
+
+// RequireReason checks that "close" commands include --reason/-r with a valid
+// commit reference in the format "<hash> <message>".
+// Returns an error if missing or malformed. Non-close commands always pass.
+func RequireReason(args []string) error {
+	if len(args) == 0 || args[0] != "close" {
+		return nil
+	}
+	if !HasFlag(args, "--reason", "-r") {
+		return fmt.Errorf("hb close requires --reason \"<commit-hash> <message>\"\n  example: hb close abc123 --reason \"a1b2c3d fix: resolve login timeout\"")
+	}
+	reason := GetFlagValue(args, "--reason", "-r")
+	if reason == "" || !reasonPattern.MatchString(reason) {
+		return fmt.Errorf("invalid --reason format: must be \"<commit-hash> <message>\"\n  got:      %q\n  expected: \"a1b2c3d fix: resolve login timeout\"", reason)
+	}
+	return nil
+}
+
+// InjectFlags appends flags (actor, assignee, session) to args based
 // on the subcommand and logged-in handle. args[0] is the bd subcommand.
 //
 // Injection rules:
 //   - --actor <handle>: ALL commands (global flag, controls created_by)
 //   - --assignee <handle>: update ONLY (NOT create, NOT close, NOT q)
-//   - --reason <commit>: close ONLY (from latest git commit subject)
 //   - --session <id>: close, update ONLY (from CLAUDE_SESSION_ID or OPENCODE_SESSION env)
 //
 // If handle is empty, skip --assignee and --actor (return args unchanged).
-// If git log fails, skip --reason silently.
 // If no session env var set, skip --session silently.
+//
+// Note: --reason is NOT auto-injected. Use RequireReason to enforce it on close.
 func InjectFlags(args []string, handle string) []string {
 	if len(args) == 0 {
 		return args
@@ -74,13 +115,6 @@ func InjectFlags(args []string, handle string) []string {
 	// NOT on create: auto-assignee breaks "update --claim" on newly created issues
 	if handle != "" && subcommand == "update" && !HasFlag(result, "--assignee", "-a") {
 		result = append(result, "--assignee", handle)
-	}
-
-	// --reason (close ONLY) — from latest git commit, only if not already present
-	if subcommand == "close" && !HasFlag(result, "--reason", "-r") {
-		if reason := GetLatestGitCommit(); reason != "" {
-			result = append(result, "--reason", reason)
-		}
 	}
 
 	// --session (close, update ONLY) — from env, only if not already present

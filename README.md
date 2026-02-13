@@ -67,10 +67,11 @@ agent -> hb -> bd
 |------|----------|--------|---------|
 | `--actor <handle>` | all | ATProto handle | Sets `created_by` field |
 | `--assignee <handle>` | `update` | ATProto handle | Auto-assigns work to you |
-| `--reason <text>` | `close` | Latest git commit subject | Documents why an issue was closed |
+| `--reason "<hash> <msg>"` | `close` | **Required** (user must provide) | Commit that resolves the issue |
 | `--session <id>` | `close`, `update` | `CLAUDE_SESSION_ID` or `OPENCODE_SESSION` env | Links actions to agent sessions |
 
-Flags are never doubled. If you pass `--reason "manual"` explicitly, the auto-inject is skipped.
+`--reason` is **mandatory** on `hb close` and must be a commit reference: `"<hash> <message>"`.
+Other flags are never doubled — if you pass one explicitly, the auto-inject is skipped.
 
 ### Output rewriting
 
@@ -109,8 +110,7 @@ hb search "query"                 # Full-text search
 hb create "Title" --type task --priority 2
 hb update <id> --status in_progress
 hb update <id> --claim            # Atomic claim (fails if already assigned)
-hb close <id>
-hb close <id> --reason "Done"     # Override auto-reason
+hb close <id> --reason "a1b2c3d fix: resolve the bug"  # commit hash + message required
 
 # Dependencies
 hb dep add <issue> <depends-on>

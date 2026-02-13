@@ -12,9 +12,14 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-// ExecBd authenticates, injects flags, runs bd, and writes output.
-// Returns an error if auth fails, bd fails to execute, or exits non-zero.
+// ExecBd authenticates, validates required flags, injects flags, runs bd, and writes output.
+// Returns an error if auth fails, validation fails, bd fails to execute, or exits non-zero.
 func ExecBd(ctx context.Context, w io.Writer, args []string) error {
+	// Validate required flags before auth (fast-fail on bad input)
+	if err := inject.RequireReason(args); err != nil {
+		return err
+	}
+
 	sess, err := auth.RequireAuth()
 	if err != nil {
 		return err
