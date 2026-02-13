@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
 )
 
 // findBdBinary locates the bd binary in PATH
@@ -66,15 +65,6 @@ func rewriteOutput(input []byte) []byte {
 	return []byte(result)
 }
 
-// rewriteSimple performs simple string replacements for exact matches
-// that don't need regex
-func rewriteSimple(input string) string {
-	replacer := strings.NewReplacer(
-		"**bd (beads)**", "**hb (heartbeads)**",
-	)
-	return replacer.Replace(input)
-}
-
 // runBd executes the bd binary with the given arguments, setting BD_NAME=hb
 // and applying output rewriting. Returns rewritten stdout, stderr, exit code,
 // and any execution error.
@@ -88,9 +78,7 @@ func runBd(ctx context.Context, args []string, extraEnv ...string) (stdout []byt
 
 	// Inherit env and add BD_NAME=hb
 	cmd.Env = append(os.Environ(), "BD_NAME=hb")
-	for _, env := range extraEnv {
-		cmd.Env = append(cmd.Env, env)
-	}
+	cmd.Env = append(cmd.Env, extraEnv...)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
