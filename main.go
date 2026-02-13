@@ -71,7 +71,6 @@ func catchallAction(ctx context.Context, cmd *cli.Command) error {
 	// Looks like an unknown subcommand — proxy to bd with auth
 	sess, err := requireAuth()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		return err
 	}
 

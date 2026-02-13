@@ -13,6 +13,7 @@ import (
 func proxyAction(ctx context.Context, cmd *cli.Command) error {
 	sess, err := requireAuth()
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return err
 	}
 
