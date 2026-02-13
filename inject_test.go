@@ -142,12 +142,13 @@ func TestInjectFlags(t *testing.T) {
 		wantExact         []string
 	}{
 		{
-			name:           "create gets actor only, NO assignee",
-			args:           []string{"create", "Fix bug"},
-			handle:         "alice.bsky.social",
-			wantActor:      true,
-			wantAssignee:   false,
-			wantActorValue: "alice.bsky.social",
+			name:              "create gets assignee AND actor",
+			args:              []string{"create", "Fix bug"},
+			handle:            "alice.bsky.social",
+			wantActor:         true,
+			wantAssignee:      true,
+			wantActorValue:    "alice.bsky.social",
+			wantAssigneeValue: "alice.bsky.social",
 		},
 		{
 			name:              "update gets assignee AND actor",
@@ -202,11 +203,12 @@ func TestInjectFlags(t *testing.T) {
 			wantAssigneeValue: "bob",
 		},
 		{
-			name:           "create with explicit --actor not overridden",
-			args:           []string{"create", "Fix bug", "--actor", "custom"},
-			handle:         "alice.bsky.social",
-			wantActor:      false, // already present, so NOT injected
-			wantAssignee:   false, // create no longer auto-injects assignee
+			name:              "create with explicit --actor not overridden",
+			args:              []string{"create", "Fix bug", "--actor", "custom"},
+			handle:            "alice.bsky.social",
+			wantActor:         false, // already present, so NOT injected
+			wantAssignee:      true,  // create DOES auto-inject assignee
+			wantAssigneeValue: "alice.bsky.social",
 			wantActorValue: "custom",
 		},
 		{

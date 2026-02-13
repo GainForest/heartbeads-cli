@@ -70,8 +70,8 @@ func injectFlags(args []string, handle string) []string {
 		result = append(result, "--actor", handle)
 	}
 
-	// --assignee (update ONLY) — only if handle is non-empty and not already present
-	if handle != "" && subcommand == "update" && !hasFlag(result, "--assignee", "-a") {
+	// --assignee (create, update ONLY) — only if handle is non-empty and not already present
+	if handle != "" && (subcommand == "create" || subcommand == "update") && !hasFlag(result, "--assignee", "-a") {
 		result = append(result, "--assignee", handle)
 	}
 
