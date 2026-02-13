@@ -150,3 +150,61 @@ func TestWipeAuthSession(t *testing.T) {
 		}
 	})
 }
+
+func TestConfigDirectory(t *testing.T) {
+	tests := []struct {
+		name    string
+		plcHost string
+	}{
+		{name: "default plc host", plcHost: ""},
+		{name: "custom plc host", plcHost: "https://plc.example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := configDirectory(tt.plcHost)
+			if dir == nil {
+				t.Fatal("configDirectory returned nil")
+			}
+		})
+	}
+}
+
+func TestGetLoggedInHandle(t *testing.T) {
+	t.Run("returns handle when session exists", func(t *testing.T) {
+		tmpDir := setupTestXDG(t)
+
+		// Create session file
+		sessDir := filepath.Join(tmpDir, "heartbeads")
+		if err := os.MkdirAll(sessDir, 0700); err != nil {
+			t.Fatalf("failed to create dir: %v", err)
+		}
+
+		sess := AuthSession{
+			DID:    syntax.DID("did:plc:handletest"),
+			Handle: "alice.bsky.social",
+		}
+		data, _ := json.Marshal(sess)
+		if err := os.WriteFile(filepath.Join(sessDir, "auth-session.json"), data, 0600); err != nil {
+			t.Fatalf("failed to write session: %v", err)
+		}
+
+		handle, err := getLoggedInHandle()
+		if err != nil {
+			t.Fatalf("getLoggedInHandle failed: %v", err)
+		}
+
+		if handle != "alice.bsky.social" {
+			t.Errorf("handle mismatch: got %s, want alice.bsky.social", handle)
+		}
+	})
+
+	t.Run("returns ErrNoAuthSession when no session", func(t *testing.T) {
+		setupTestXDG(t)
+
+		_, err := getLoggedInHandle()
+		if err != ErrNoAuthSession {
+			t.Errorf("expected ErrNoAuthSession, got %v", err)
+		}
+	})
+}

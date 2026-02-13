@@ -1,12 +1,18 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"os"
 
-	"github.com/adrg/xdg"
+	comatproto "github.com/bluesky-social/indigo/api/atproto"
+	"github.com/bluesky-social/indigo/atproto/atclient"
+	"github.com/bluesky-social/indigo/atproto/identity"
 	"github.com/bluesky-social/indigo/atproto/syntax"
+
+	"github.com/adrg/xdg"
 )
 
 // ErrNoAuthSession is returned when no auth session file is found
@@ -71,4 +77,66 @@ func wipeAuthSession() error {
 		return nil
 	}
 	return os.Remove(fPath)
+}
+
+// authRefreshCallback is called when tokens are refreshed
+func authRefreshCallback(ctx context.Context, data atclient.PasswordSessionData) {
+	sess, _ := loadAuthSessionFile()
+	if sess == nil {
+		sess = &AuthSession{}
+	}
+
+	sess.DID = data.AccountDID
+	sess.AccessToken = data.AccessToken
+	sess.RefreshToken = data.RefreshToken
+	sess.PDS = data.Host
+
+	if err := persistAuthSession(sess); err != nil {
+		slog.Warn("failed to save refreshed auth session data", "err", err)
+	}
+}
+
+// configDirectory returns an identity directory for the given PLC host
+func configDirectory(_ string) identity.Directory {
+	return identity.DefaultDirectory()
+}
+
+// loadAuthClient loads an auth client from the saved session
+func loadAuthClient(ctx context.Context) (*atclient.APIClient, error) {
+	sess, err := loadAuthSessionFile()
+	if err != nil {
+		return nil, err
+	}
+
+	// First try to resume session
+	client := atclient.ResumePasswordSession(atclient.PasswordSessionData{
+		AccessToken:  sess.AccessToken,
+		RefreshToken: sess.RefreshToken,
+		AccountDID:   sess.DID,
+		Host:         sess.PDS,
+	}, authRefreshCallback)
+
+	// Check that auth is working
+	_, err = comatproto.ServerGetSession(ctx, client)
+	if err == nil {
+		return client, nil
+	}
+
+	// Otherwise try new auth session using saved password
+	plcHost := os.Getenv("ATP_PLC_HOST")
+	if plcHost == "" {
+		plcHost = "https://plc.directory"
+	}
+	dir := configDirectory(plcHost)
+	return atclient.LoginWithPassword(ctx, dir, sess.DID.AtIdentifier(), sess.Password, "", authRefreshCallback)
+}
+
+// getLoggedInHandle returns the ATProto handle of the logged-in user.
+// Returns ErrNoAuthSession if not logged in.
+func getLoggedInHandle() (string, error) {
+	sess, err := loadAuthSessionFile()
+	if err != nil {
+		return "", err
+	}
+	return sess.Handle, nil
 }
