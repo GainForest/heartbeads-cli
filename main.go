@@ -45,8 +45,8 @@ func buildApp(w io.Writer) *cli.Command {
 				Sources: cli.EnvVars("ATP_PLC_HOST"),
 			},
 		},
-		Commands: []*cli.Command{
+		Commands: append([]*cli.Command{
 			cmdAccount,
-		},
+		}, buildProxyCommands()...),
 	}
 }
