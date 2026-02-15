@@ -11,19 +11,32 @@ import (
 )
 
 // CmdComment is the "comment" command group.
-// Subcommands:
-//   - get <beads-id>: fetch and display comments (native, no auth required)
-//
-// Fallback: proxy unrecognized subcommands to bd via proxy.ExecBd
 var CmdComment = &cli.Command{
-	Name:   "comment",
-	Usage:  "View or manage comments",
+	Name:  "comment",
+	Usage: "View or manage ATProto comments on beads issues",
+	Description: `Read and write comments stored on the AT Protocol network.
+
+Comments are org.impactindexer.review.comment records in each user's ATProto
+repo, indexed by Hypergoat and displayed on the heartbeads map.
+
+Reading comments does not require login. Writing requires an ATProto session
+(run: hb account login).
+
+Examples:
+  hb comment get beads-map-3jy              View threaded comments
+  hb comment get beads-map-3jy --json       Machine-readable output
+  hb comment add beads-map-3jy "LGTM"       Post a comment (requires login)
+  hb comment add --reply-to at://did:plc:abc/org.impactindexer.review.comment/rkey1 beads-map-3jy "thanks!"`,
 	Action: fallbackAction,
 	Commands: []*cli.Command{
 		{
 			Name:      "get",
 			Usage:     "Get comments for a beads issue",
 			ArgsUsage: "<beads-id>",
+			Description: `Fetch and display threaded comments for a beads issue.
+
+Comments are fetched from the Hypergoat GraphQL indexer and Bluesky profiles
+are resolved for each commenter. No login required.`,
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "json",
@@ -47,6 +60,10 @@ var CmdComment = &cli.Command{
 			Name:      "add",
 			Usage:     "Add a comment to a beads issue",
 			ArgsUsage: "<beads-id> <text>",
+			Description: `Post a comment to a beads issue via ATProto (requires login).
+
+The comment is written as an org.impactindexer.review.comment record to your
+ATProto repo. Use --reply-to to reply to an existing comment by its AT-URI.`,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "reply-to",
