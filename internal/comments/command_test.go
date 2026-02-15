@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-// TestFallbackNoArgs verifies that running "hb comments" with no args shows help
+// TestFallbackNoArgs verifies that running "hb comment" with no args shows help
 // and does NOT contain "bd" branding
 func TestFallbackNoArgs(t *testing.T) {
 	var buf bytes.Buffer
@@ -17,11 +17,11 @@ func TestFallbackNoArgs(t *testing.T) {
 		Name:   "hb",
 		Writer: &buf,
 		Commands: []*cli.Command{
-			CmdComments,
+			CmdComment,
 		},
 	}
 
-	err := app.Run(context.Background(), []string{"hb", "comments"})
+	err := app.Run(context.Background(), []string{"hb", "comment"})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestFallbackNoArgs(t *testing.T) {
 	}
 }
 
-// TestFallbackHelp verifies that running "hb comments --help" shows help
+// TestFallbackHelp verifies that running "hb comment --help" shows help
 // and contains the "get" subcommand
 func TestFallbackHelp(t *testing.T) {
 	var buf bytes.Buffer
@@ -47,11 +47,11 @@ func TestFallbackHelp(t *testing.T) {
 		Name:   "hb",
 		Writer: &buf,
 		Commands: []*cli.Command{
-			CmdComments,
+			CmdComment,
 		},
 	}
 
-	err := app.Run(context.Background(), []string{"hb", "comments", "--help"})
+	err := app.Run(context.Background(), []string{"hb", "comment", "--help"})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}

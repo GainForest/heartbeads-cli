@@ -51,7 +51,7 @@ func buildApp(w io.Writer) *cli.Command {
 		},
 		Commands: append([]*cli.Command{
 			account.CmdAccount,
-			comments.CmdComments,
+			comments.CmdComment,
 		}, proxy.BuildProxyCommands()...),
 	}
 }

@@ -7,13 +7,13 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-// CmdComments is the "comments" command group.
+// CmdComment is the "comment" command group.
 // Subcommands:
 //   - get <beads-id>: fetch and display comments (native, no auth required)
 //
 // Fallback: proxy unrecognized subcommands to bd via proxy.ExecBd
-var CmdComments = &cli.Command{
-	Name:   "comments",
+var CmdComment = &cli.Command{
+	Name:   "comment",
 	Usage:  "View or manage comments",
 	Action: fallbackAction,
 	Commands: []*cli.Command{
@@ -48,7 +48,7 @@ func runCommentsGet(ctx context.Context, cmd *cli.Command) error {
 	// Get beads-id from args
 	beadsID := cmd.Args().First()
 	if beadsID == "" {
-		return fmt.Errorf("usage: hb comments get <beads-id>")
+		return fmt.Errorf("usage: hb comment get <beads-id>")
 	}
 
 	// Get flag values
