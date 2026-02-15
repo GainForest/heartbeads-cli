@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/gainforest/heartbeads-cli/internal/account"
+	"github.com/gainforest/heartbeads-cli/internal/comments"
 	"github.com/gainforest/heartbeads-cli/internal/proxy"
 	"github.com/urfave/cli/v3"
 )
@@ -50,6 +51,7 @@ func buildApp(w io.Writer) *cli.Command {
 		},
 		Commands: append([]*cli.Command{
 			account.CmdAccount,
+			comments.CmdComments,
 		}, proxy.BuildProxyCommands()...),
 	}
 }

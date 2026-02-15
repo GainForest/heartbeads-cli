@@ -204,3 +204,47 @@ func TestAccountLogin_MissingCredentials(t *testing.T) {
 		t.Fatal("expected error for missing required flags")
 	}
 }
+
+// TestCommentsGetNoAuth tests that comments get does not require auth
+func TestCommentsGetNoAuth(t *testing.T) {
+	setupTestXDG(t)
+
+	var buf bytes.Buffer
+	err := runWithOutput([]string{"hb", "comments", "get"}, &buf)
+	if err == nil {
+		t.Fatal("expected error for missing beads-id")
+	}
+
+	// Should error about usage, not auth
+	if !strings.Contains(err.Error(), "usage") {
+		t.Errorf("expected 'usage' error, got: %v", err)
+	}
+}
+
+// TestCommentsGetHelp tests that comments get help works
+func TestCommentsGetHelp(t *testing.T) {
+	var buf bytes.Buffer
+	err := runWithOutput([]string{"hb", "comments", "get", "--help"}, &buf)
+	if err != nil {
+		t.Fatalf("help should work: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "beads-id") {
+		t.Errorf("help should mention 'beads-id', got: %s", output)
+	}
+}
+
+// TestCommentsInHelp tests that comments appears in main help
+func TestCommentsInHelp(t *testing.T) {
+	var buf bytes.Buffer
+	err := runWithOutput([]string{"hb", "--help"}, &buf)
+	if err != nil {
+		t.Fatalf("help should work: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "comments") {
+		t.Errorf("help should mention 'comments' command, got: %s", output)
+	}
+}

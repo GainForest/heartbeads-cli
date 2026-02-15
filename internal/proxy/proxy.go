@@ -94,7 +94,6 @@ func BuildProxyCommands() []*cli.Command {
 		{"epic", "Epic management commands"},
 		{"children", "List child beads of a parent"},
 		{"graph", "Display issue dependency graph"},
-		{"comments", "View or manage comments"},
 		{"label", "Manage issue labels"},
 
 		// Other
