@@ -3,8 +3,8 @@ package comments
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 )
 
@@ -54,9 +54,12 @@ func ResolveProfiles(ctx context.Context, apiURL string, dids []string) map[stri
 // fetchProfile fetches a single profile from the Bluesky API.
 // Returns a fallback profile (DID as handle) on any error.
 func fetchProfile(ctx context.Context, apiURL, did string) Profile {
-	url := fmt.Sprintf("%s/xrpc/app.bsky.actor.getProfile?actor=%s", apiURL, did)
+	u, _ := url.Parse(apiURL + "/xrpc/app.bsky.actor.getProfile")
+	q := u.Query()
+	q.Set("actor", did)
+	u.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return Profile{DID: did, Handle: did}
 	}
