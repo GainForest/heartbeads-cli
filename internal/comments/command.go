@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gainforest/heartbeads-cli/internal/proxy"
 	"github.com/urfave/cli/v3"
 )
 
@@ -72,8 +71,7 @@ func runCommentsGet(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-// fallbackAction proxies unrecognized subcommands to bd
+// fallbackAction shows help when no subcommand is provided
 func fallbackAction(ctx context.Context, cmd *cli.Command) error {
-	args := append([]string{"comments"}, cmd.Args().Slice()...)
-	return proxy.ExecBd(ctx, cmd.Root().Writer, args)
+	return cli.ShowSubcommandHelp(cmd)
 }
