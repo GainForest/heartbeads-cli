@@ -66,6 +66,52 @@ const graphQLQuery = `query FetchRecords($collection: String!, $first: Int, $aft
   }
 }`
 
+// fetchPage fetches a single page of records from the GraphQL indexer.
+func fetchPage(ctx context.Context, indexerURL string, variables map[string]interface{}) (*graphQLResponse, error) {
+	// Create GraphQL request
+	reqBody := graphQLRequest{
+		Query:     graphQLQuery,
+		Variables: variables,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", indexerURL, bytes.NewReader(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Execute request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check HTTP status
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// Parse response
+	var gqlResp graphQLResponse
+	if err := json.NewDecoder(resp.Body).Decode(&gqlResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Check for GraphQL errors
+	if len(gqlResp.Errors) > 0 {
+		return nil, fmt.Errorf("graphql error: %s", gqlResp.Errors[0].Message)
+	}
+
+	return &gqlResp, nil
+}
+
 // FetchRecordsByCollection queries the Hypergoat GraphQL indexer for all records
 // in the given collection. Paginates automatically (100 per page, max 5 pages).
 func FetchRecordsByCollection(ctx context.Context, indexerURL, collection string) ([]IndexerRecord, error) {
@@ -84,45 +130,10 @@ func FetchRecordsByCollection(ctx context.Context, indexerURL, collection string
 			variables["after"] = *cursor
 		}
 
-		// Create GraphQL request
-		reqBody := graphQLRequest{
-			Query:     graphQLQuery,
-			Variables: variables,
-		}
-
-		jsonData, err := json.Marshal(reqBody)
+		// Fetch page
+		gqlResp, err := fetchPage(ctx, indexerURL, variables)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal request: %w", err)
-		}
-
-		// Create HTTP request
-		req, err := http.NewRequestWithContext(ctx, "POST", indexerURL, bytes.NewReader(jsonData))
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request: %w", err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		// Execute request
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("failed to execute request: %w", err)
-		}
-		defer resp.Body.Close()
-
-		// Check HTTP status
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-
-		// Parse response
-		var gqlResp graphQLResponse
-		if err := json.NewDecoder(resp.Body).Decode(&gqlResp); err != nil {
-			return nil, fmt.Errorf("failed to decode response: %w", err)
-		}
-
-		// Check for GraphQL errors
-		if len(gqlResp.Errors) > 0 {
-			return nil, fmt.Errorf("graphql error: %s", gqlResp.Errors[0].Message)
+			return nil, err
 		}
 
 		// Extract records
