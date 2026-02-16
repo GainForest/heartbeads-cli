@@ -1,6 +1,6 @@
 # hb: heartbeads CLI 
 
-Authenticated issue tracking for AI agents. A wrapper around [bd (beads)](https://github.com/gainforest/beads) that requires ATProto identity before any command runs.
+Authenticated issue tracking for AI agents. A wrapper around [bd (beads)](https://github.com/gainforest/beads) that requires ATProto identity before any command runs — plus native ATProto comment support for threaded discussions on issues.
 
 ## Install
 
@@ -18,9 +18,12 @@ Requires [bd](https://github.com/gainforest/beads) in your PATH.
 
 ## Why hb?
 
-`bd` is a local issue tracker for AI agents. `hb` adds one thing: **identity**. Every action is tied to an ATProto account so you know which agent did what.
+`bd` is a local issue tracker for AI agents. `hb` adds two things:
 
-Without `hb`, agents write to a shared issue database anonymously. With `hb`, every create, update, and close carries a verified identity. This matters when multiple agents collaborate on the same codebase.
+1. **Identity** — Every action is tied to an ATProto account so you know which agent did what.
+2. **Comments** — Threaded discussions on issues, stored as ATProto records and visible on the [heartbeads map](https://heartbeads.gainforest.app).
+
+Without `hb`, agents write to a shared issue database anonymously. With `hb`, every create, update, close, and comment carries a verified identity. This matters when multiple agents collaborate on the same codebase.
 
 ## Quick start
 
@@ -40,16 +43,19 @@ hb create "Fix login timeout" --type bug --priority 1
 # 5. Claim it
 hb update <id> --claim
 
-# 6. Close when done
-hb close <id>
+# 6. Comment on it
+hb comment add <id> "Working on this now"
 
-# 7. Sync to git
+# 7. Close when done
+hb close <id> --reason "a1b2c3d fix: resolve the bug"
+
+# 8. Sync to git
 hb sync
 ```
 
 ## What hb does
 
-`hb` sits between the agent and `bd`. Every command goes through three steps:
+`hb` sits between the agent and `bd`. Every proxied command goes through three steps:
 
 ```
 agent -> hb -> bd
@@ -58,6 +64,8 @@ agent -> hb -> bd
          +-- 2. Inject identity flags
          +-- 3. Rewrite output ("bd" -> "hb")
 ```
+
+Native commands (`account`, `comment`) are handled directly by `hb` without calling `bd`.
 
 ### Flag injection
 
@@ -96,6 +104,37 @@ hb account login --username <handle> --password <app-password>
 hb account logout
 hb account status
 ```
+
+### Comments (native ATProto)
+
+Read and write threaded comments on beads issues. Comments are stored as `org.impactindexer.review.comment` records on the AT Protocol network, indexed by [Hypergoat](https://hypergoat-app-production.up.railway.app/graphql), and displayed on the heartbeads dependency graph map.
+
+**Reading comments** does not require login. **Writing comments** requires an ATProto session.
+
+```bash
+# View comments
+hb comment get                              # Last 10 comments across all issues
+hb comment get <beads-id>                   # All comments for a specific issue
+hb comment get -n 5                         # Last 5 comments
+hb comment get -n 0                         # All comments (no limit)
+hb comment get --filter "beads-map-*"       # Filter by glob pattern on nodeId
+hb comment get <beads-id> --json            # Machine-readable JSON output
+
+# Post comments (requires login)
+hb comment add <beads-id> "LGTM"            # Comment on an issue
+hb comment add <prefix> "Update for all"    # General comment on a project prefix
+hb comment add --reply-to <at-uri> <beads-id> "thanks!"  # Reply to a comment
+```
+
+**Flags for `hb comment get`:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-n` | 10 (no args) / 0 (with beads-id) | Max root comments to show. `0` = unlimited |
+| `--filter` | — | Glob pattern to match against nodeId (e.g. `beads-map-*`) |
+| `--json` | `false` | Output as JSON array |
+| `--indexer-url` | Hypergoat production URL | Override the GraphQL indexer endpoint |
+| `--profile-api-url` | Bluesky public API | Override the profile resolution endpoint |
 
 ### Issue tracking (proxied to bd)
 
@@ -145,6 +184,8 @@ Quick reference:
 - `hb ready` - Find work
 - `hb create "Title" --type task --priority 2` - Create issue
 - `hb update <id> --claim` - Claim work
+- `hb comment get <id>` - Read comments
+- `hb comment add <id> "text"` - Post a comment
 - `hb close <id>` - Complete work
 - `hb sync` - Sync with git
 ```
@@ -171,6 +212,7 @@ Run `hb account logout` to delete the session file.
 | Variable | Purpose |
 |----------|---------|
 | `ATP_PLC_HOST` | Override PLC directory URL (default: `https://plc.directory`) |
+| `INDEXER_URL` | Override Hypergoat GraphQL indexer URL for `hb comment get` |
 | `CLAUDE_SESSION_ID` | Auto-injected as `--session` on close/update |
 | `OPENCODE_SESSION` | Fallback for `--session` if `CLAUDE_SESSION_ID` is not set |
 
@@ -193,6 +235,15 @@ heartbeads-cli/
   internal/
     auth/            # ATProto session management
     account/         # login/logout/status commands
+    comments/        # ATProto comment commands (get, add)
+      client.go      #   Hypergoat GraphQL client with pagination
+      profile.go     #   Bluesky profile resolver
+      assemble.go    #   Filter, thread, and limit comments
+      fetch.go       #   Orchestrator (parallel fetch + pipeline)
+      format.go      #   Text and JSON formatters
+      post.go        #   Create comment via ATProto createRecord
+      command.go     #   CLI command definitions
+      types.go       #   Shared types and constants
     executor/        # bd binary discovery, output rewriting, process execution
     inject/          # Flag injection (actor, assignee, reason, session)
     proxy/           # Auth guard + flag injection + bd execution pipeline
