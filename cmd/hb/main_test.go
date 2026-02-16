@@ -205,19 +205,27 @@ func TestAccountLogin_MissingCredentials(t *testing.T) {
 	}
 }
 
-// TestCommentGetNoAuth tests that comment get does not require auth
+// TestCommentGetNoAuth tests that comment get does not require auth.
+// With no beads-id, "hb comment get" now fetches all comments (default limit 10).
+// It will fail with a fetch error (can't reach indexer in tests), not a usage or auth error.
 func TestCommentGetNoAuth(t *testing.T) {
 	setupTestXDG(t)
 
 	var buf bytes.Buffer
 	err := runWithOutput([]string{"hb", "comment", "get"}, &buf)
+
+	// Should fail with a fetch error (can't reach indexer), NOT an auth error
 	if err == nil {
-		t.Fatal("expected error for missing beads-id")
+		// If somehow the default indexer is reachable, that's fine too
+		return
 	}
 
-	// Should error about usage, not auth
-	if !strings.Contains(err.Error(), "usage") {
-		t.Errorf("expected 'usage' error, got: %v", err)
+	errMsg := err.Error()
+	if strings.Contains(errMsg, "Not logged in") || strings.Contains(errMsg, "auth") {
+		t.Errorf("comment get should not require auth, got: %v", err)
+	}
+	if strings.Contains(errMsg, "usage") {
+		t.Errorf("comment get no longer requires beads-id, got: %v", err)
 	}
 }
 
