@@ -99,7 +99,7 @@ func TestFetchComments(t *testing.T) {
 	defer profileServer.Close()
 
 	// Fetch comments
-	comments, err := FetchComments(context.Background(), indexerServer.URL, profileServer.URL, "test-id")
+	comments, err := FetchComments(context.Background(), indexerServer.URL, profileServer.URL, FetchOptions{BeadsID: "test-id"})
 	if err != nil {
 		t.Fatalf("FetchComments failed: %v", err)
 	}
@@ -188,7 +188,7 @@ func TestFetchCommentsNotFound(t *testing.T) {
 	defer profileServer.Close()
 
 	// Fetch comments for test-id (should be empty)
-	comments, err := FetchComments(context.Background(), indexerServer.URL, profileServer.URL, "test-id")
+	comments, err := FetchComments(context.Background(), indexerServer.URL, profileServer.URL, FetchOptions{BeadsID: "test-id"})
 	if err != nil {
 		t.Fatalf("FetchComments failed: %v", err)
 	}
@@ -250,7 +250,7 @@ func TestFetchCommentsLikesFail(t *testing.T) {
 	defer profileServer.Close()
 
 	// Fetch comments (should succeed despite likes failure)
-	comments, err := FetchComments(context.Background(), indexerServer.URL, profileServer.URL, "test-id")
+	comments, err := FetchComments(context.Background(), indexerServer.URL, profileServer.URL, FetchOptions{BeadsID: "test-id"})
 	if err != nil {
 		t.Fatalf("FetchComments failed: %v", err)
 	}
@@ -262,5 +262,102 @@ func TestFetchCommentsLikesFail(t *testing.T) {
 
 	if comments[0].Likes != 0 {
 		t.Errorf("expected 0 likes (likes fetch failed), got %d", comments[0].Likes)
+	}
+}
+
+func TestFetchCommentsNoFilter(t *testing.T) {
+	// Mock indexer server
+	indexerServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req graphQLRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		collection := req.Variables["collection"].(string)
+
+		if collection == CommentCollection {
+			// Return 2 comment records for beads:test-id
+			resp := graphQLResponse{
+				Data: &graphQLData{
+					Records: &recordsPage{
+						Edges: []recordEdge{
+							{
+								Node: IndexerRecord{
+									DID:  "did:plc:alice",
+									URI:  "at://did:plc:alice/org.impactindexer.review.comment/1",
+									RKey: "1",
+									Value: map[string]interface{}{
+										"subject": map[string]interface{}{
+											"uri": "beads:test-id",
+										},
+										"text":      "First comment",
+										"createdAt": "2025-01-15T10:00:00Z",
+									},
+								},
+							},
+							{
+								Node: IndexerRecord{
+									DID:  "did:plc:bob",
+									URI:  "at://did:plc:bob/org.impactindexer.review.comment/2",
+									RKey: "2",
+									Value: map[string]interface{}{
+										"subject": map[string]interface{}{
+											"uri": "beads:test-id",
+										},
+										"text":      "Second comment",
+										"createdAt": "2025-01-15T11:00:00Z",
+									},
+								},
+							},
+						},
+						PageInfo: pageInfo{HasNextPage: false},
+					},
+				},
+			}
+			json.NewEncoder(w).Encode(resp)
+		} else if collection == LikeCollection {
+			// Return empty likes
+			resp := graphQLResponse{
+				Data: &graphQLData{
+					Records: &recordsPage{
+						Edges:    []recordEdge{},
+						PageInfo: pageInfo{HasNextPage: false},
+					},
+				},
+			}
+			json.NewEncoder(w).Encode(resp)
+		}
+	}))
+	defer indexerServer.Close()
+
+	// Mock profile server
+	profileServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		actor := r.URL.Query().Get("actor")
+		var profile Profile
+		if actor == "did:plc:alice" {
+			profile = Profile{DID: "did:plc:alice", Handle: "alice.bsky.social"}
+		} else if actor == "did:plc:bob" {
+			profile = Profile{DID: "did:plc:bob", Handle: "bob.bsky.social"}
+		}
+		json.NewEncoder(w).Encode(profile)
+	}))
+	defer profileServer.Close()
+
+	// Fetch comments with no filter (empty FetchOptions)
+	comments, err := FetchComments(context.Background(), indexerServer.URL, profileServer.URL, FetchOptions{})
+	if err != nil {
+		t.Fatalf("FetchComments failed: %v", err)
+	}
+
+	// Verify 2 comments returned (both test-id ones, not filtered)
+	if len(comments) != 2 {
+		t.Fatalf("expected 2 comments, got %d", len(comments))
+	}
+
+	// Verify both have nodeID "test-id"
+	for _, comment := range comments {
+		if comment.NodeID != "test-id" {
+			t.Errorf("expected nodeID 'test-id', got '%s'", comment.NodeID)
+		}
 	}
 }

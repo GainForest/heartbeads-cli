@@ -89,7 +89,7 @@ func runCommentsGet(ctx context.Context, cmd *cli.Command) error {
 	profileAPIURL := cmd.String("profile-api-url")
 
 	// Fetch comments
-	comments, err := FetchComments(ctx, indexerURL, profileAPIURL, beadsID)
+	comments, err := FetchComments(ctx, indexerURL, profileAPIURL, FetchOptions{BeadsID: beadsID})
 	if err != nil {
 		return fmt.Errorf("failed to fetch comments: %w", err)
 	}

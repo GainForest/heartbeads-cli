@@ -324,3 +324,101 @@ func TestFilterByNodeID(t *testing.T) {
 		}
 	}
 }
+
+func TestFilterByPattern(t *testing.T) {
+	comments := []BeadsComment{
+		{NodeID: "beads-map-abc", Text: "Comment 1"},
+		{NodeID: "beads-map-def", Text: "Comment 2"},
+		{NodeID: "beads-tree-xyz", Text: "Comment 3"},
+	}
+
+	filtered := FilterByPattern(comments, "beads-map-*")
+
+	if len(filtered) != 2 {
+		t.Fatalf("expected 2 filtered comments, got %d", len(filtered))
+	}
+
+	for _, comment := range filtered {
+		if comment.NodeID != "beads-map-abc" && comment.NodeID != "beads-map-def" {
+			t.Errorf("unexpected nodeID in filtered results: %s", comment.NodeID)
+		}
+	}
+}
+
+func TestFilterByPatternEmpty(t *testing.T) {
+	comments := []BeadsComment{
+		{NodeID: "beads-map-abc", Text: "Comment 1"},
+		{NodeID: "beads-map-def", Text: "Comment 2"},
+		{NodeID: "beads-tree-xyz", Text: "Comment 3"},
+	}
+
+	filtered := FilterByPattern(comments, "")
+
+	if len(filtered) != 3 {
+		t.Fatalf("expected 3 comments (all unchanged), got %d", len(filtered))
+	}
+}
+
+func TestFilterByPatternInvalid(t *testing.T) {
+	comments := []BeadsComment{
+		{NodeID: "beads-map-abc", Text: "Comment 1"},
+		{NodeID: "beads-map-def", Text: "Comment 2"},
+		{NodeID: "beads-tree-xyz", Text: "Comment 3"},
+	}
+
+	// Invalid pattern with unclosed bracket
+	filtered := FilterByPattern(comments, "[invalid")
+
+	// All should fail to match, so empty result
+	if len(filtered) != 0 {
+		t.Fatalf("expected 0 comments (invalid pattern), got %d", len(filtered))
+	}
+}
+
+func TestLimitComments(t *testing.T) {
+	comments := []BeadsComment{
+		{NodeID: "1", Text: "Comment 1"},
+		{NodeID: "2", Text: "Comment 2"},
+		{NodeID: "3", Text: "Comment 3"},
+		{NodeID: "4", Text: "Comment 4"},
+		{NodeID: "5", Text: "Comment 5"},
+	}
+
+	limited := LimitComments(comments, 3)
+
+	if len(limited) != 3 {
+		t.Fatalf("expected 3 comments, got %d", len(limited))
+	}
+
+	// Verify they are the first 3
+	if limited[0].NodeID != "1" || limited[1].NodeID != "2" || limited[2].NodeID != "3" {
+		t.Errorf("expected first 3 comments, got %v", limited)
+	}
+}
+
+func TestLimitCommentsZero(t *testing.T) {
+	comments := []BeadsComment{
+		{NodeID: "1", Text: "Comment 1"},
+		{NodeID: "2", Text: "Comment 2"},
+		{NodeID: "3", Text: "Comment 3"},
+	}
+
+	limited := LimitComments(comments, 0)
+
+	if len(limited) != 3 {
+		t.Fatalf("expected 3 comments (no limit), got %d", len(limited))
+	}
+}
+
+func TestLimitCommentsExceedsLength(t *testing.T) {
+	comments := []BeadsComment{
+		{NodeID: "1", Text: "Comment 1"},
+		{NodeID: "2", Text: "Comment 2"},
+	}
+
+	limited := LimitComments(comments, 10)
+
+	if len(limited) != 2 {
+		t.Fatalf("expected 2 comments (all returned), got %d", len(limited))
+	}
+}

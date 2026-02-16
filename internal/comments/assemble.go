@@ -1,6 +1,7 @@
 package comments
 
 import (
+	"path"
 	"sort"
 	"strings"
 )
@@ -197,4 +198,40 @@ func FilterByNodeID(comments []BeadsComment, nodeID string) []BeadsComment {
 		}
 	}
 	return filtered
+}
+
+// FilterByPattern returns only root-level comments whose NodeID matches the given glob pattern.
+// Uses path.Match semantics (*, ?, [abc] supported).
+// If pattern is empty, returns all comments unchanged.
+// If pattern is invalid, returns all comments unchanged (do NOT error).
+func FilterByPattern(comments []BeadsComment, pattern string) []BeadsComment {
+	if pattern == "" {
+		return comments
+	}
+
+	filtered := make([]BeadsComment, 0)
+	for _, comment := range comments {
+		matched, err := path.Match(pattern, comment.NodeID)
+		if err != nil {
+			// Invalid pattern - skip this comment (treat as non-match)
+			continue
+		}
+		if matched {
+			filtered = append(filtered, comment)
+		}
+	}
+	return filtered
+}
+
+// LimitComments returns at most n root-level comments from the input.
+// If n <= 0, returns all comments (no limit).
+// Replies within each returned comment are preserved.
+func LimitComments(comments []BeadsComment, n int) []BeadsComment {
+	if n <= 0 {
+		return comments
+	}
+	if n >= len(comments) {
+		return comments
+	}
+	return comments[:n]
 }

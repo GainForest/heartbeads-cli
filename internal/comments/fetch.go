@@ -8,7 +8,7 @@ import (
 // FetchComments fetches all comments for a specific beads issue from the Hypergoat indexer.
 // Orchestrates: fetch records (comments + likes in parallel), filter, resolve profiles, assemble, thread, filter by ID.
 // Returns threaded comments for the given beadsID, newest-first at root level.
-func FetchComments(ctx context.Context, indexerURL, profileAPIURL, beadsID string) ([]BeadsComment, error) {
+func FetchComments(ctx context.Context, indexerURL, profileAPIURL string, opts FetchOptions) ([]BeadsComment, error) {
 	// Fetch comment records and like records in parallel
 	var commentRecords, likeRecords []IndexerRecord
 	var commentErr, likeErr error
@@ -63,8 +63,20 @@ func FetchComments(ctx context.Context, indexerURL, profileAPIURL, beadsID strin
 	// Build threads
 	threaded := BuildThreads(assembled)
 
-	// Filter by nodeID
-	filtered := FilterByNodeID(threaded, beadsID)
+	// Filter by exact nodeID (if specified)
+	if opts.BeadsID != "" {
+		threaded = FilterByNodeID(threaded, opts.BeadsID)
+	}
 
-	return filtered, nil
+	// Filter by pattern (if specified)
+	if opts.Pattern != "" {
+		threaded = FilterByPattern(threaded, opts.Pattern)
+	}
+
+	// Limit results
+	if opts.Limit > 0 {
+		threaded = LimitComments(threaded, opts.Limit)
+	}
+
+	return threaded, nil
 }

@@ -47,3 +47,10 @@ type BeadsComment struct {
 	Likes       int            `json:"likes"`
 	Replies     []BeadsComment `json:"replies,omitempty"`
 }
+
+// FetchOptions controls filtering and limiting of fetched comments.
+type FetchOptions struct {
+	BeadsID string // exact nodeID match (empty = no exact filter)
+	Pattern string // glob pattern match (empty = no pattern filter)
+	Limit   int    // max root comments to return (0 = unlimited)
+}
