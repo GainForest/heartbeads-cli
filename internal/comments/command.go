@@ -23,20 +23,33 @@ Reading comments does not require login. Writing requires an ATProto session
 (run: hb account login).
 
 Examples:
-  hb comment get beads-map-3jy              View threaded comments
-  hb comment get beads-map-3jy --json       Machine-readable output
-  hb comment add beads-map-3jy "LGTM"       Post a comment (requires login)
-  hb comment add --reply-to at://did:plc:abc/org.impactindexer.review.comment/rkey1 beads-map-3jy "thanks!"`,
+  hb comment get                                Last 10 comments
+  hb comment get beads-map-3jy                  View threaded comments
+  hb comment get -n 5                           Last 5 comments
+  hb comment get --filter "beads-map-*"         Filter by glob pattern
+  hb comment get beads-map-3jy --json           Machine-readable output
+  hb comment add beads-map-3jy "LGTM"           Post a comment (requires login)
+  hb comment add --reply-to at://... beads-map-3jy "thanks!"`,
 	Action: fallbackAction,
 	Commands: []*cli.Command{
 		{
 			Name:      "get",
-			Usage:     "Get comments for a beads issue",
-			ArgsUsage: "<beads-id>",
-			Description: `Fetch and display threaded comments for a beads issue.
+			Usage:     "Get comments for a beads issue or across all issues",
+			ArgsUsage: "[beads-id]",
+			Description: `Fetch and display threaded comments.
+
+Without arguments, shows the last 10 comments across all issues.
+With a beads-id, shows all comments for that specific issue.
 
 Comments are fetched from the Hypergoat GraphQL indexer and Bluesky profiles
-are resolved for each commenter. No login required.`,
+are resolved for each commenter. No login required.
+
+Examples:
+  hb comment get                        Last 10 comments across all issues
+  hb comment get beads-map-3jy          All comments for beads-map-3jy
+  hb comment get -n 5                   Last 5 comments across all issues
+  hb comment get -n 0                   All comments (no limit)
+  hb comment get --filter "beads-map-*" Comments matching glob pattern`,
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "json",
@@ -52,6 +65,15 @@ are resolved for each commenter. No login required.`,
 					Name:  "profile-api-url",
 					Usage: "Bluesky profile API URL",
 					Value: DefaultProfileAPIURL,
+				},
+				&cli.IntFlag{
+					Name:  "n",
+					Usage: "Maximum number of root comments to show (0 = unlimited)",
+					Value: 0,
+				},
+				&cli.StringFlag{
+					Name:  "filter",
+					Usage: "Glob pattern to match against nodeId (e.g. beads-map-*)",
 				},
 			},
 			Action: runCommentsGet,
@@ -77,24 +99,31 @@ ATProto repo. Use --reply-to to reply to an existing comment by its AT-URI.`,
 
 // runCommentsGet fetches and displays comments for a beads issue
 func runCommentsGet(ctx context.Context, cmd *cli.Command) error {
-	// Get beads-id from args
-	beadsID := cmd.Args().First()
-	if beadsID == "" {
-		return fmt.Errorf("usage: hb comment get <beads-id>")
-	}
+	beadsID := cmd.Args().First() // may be empty now
 
-	// Get flag values
 	jsonOutput := cmd.Bool("json")
 	indexerURL := cmd.String("indexer-url")
 	profileAPIURL := cmd.String("profile-api-url")
+	limit := cmd.Int("n")
+	filter := cmd.String("filter")
 
-	// Fetch comments
-	comments, err := FetchComments(ctx, indexerURL, profileAPIURL, FetchOptions{BeadsID: beadsID})
+	// Build fetch options
+	opts := FetchOptions{
+		BeadsID: beadsID,
+		Pattern: filter,
+		Limit:   int(limit),
+	}
+
+	// Default limit: 10 when no beads-id and no explicit -n flag was set
+	if beadsID == "" && !cmd.IsSet("n") {
+		opts.Limit = 10
+	}
+
+	comments, err := FetchComments(ctx, indexerURL, profileAPIURL, opts)
 	if err != nil {
 		return fmt.Errorf("failed to fetch comments: %w", err)
 	}
 
-	// Format output
 	if jsonOutput {
 		return FormatJSON(cmd.Root().Writer, comments)
 	}
