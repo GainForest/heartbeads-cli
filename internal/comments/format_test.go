@@ -78,11 +78,11 @@ func TestFormatTextThreaded(t *testing.T) {
 	// Root should have no indent, reply should have 2 spaces
 	lines := strings.Split(output, "\n")
 
-	// Find the reply line (should start with 2 spaces)
+	// Find the reply line (should start with 2 spaces then [nodeID])
 	foundReply := false
 	for _, line := range lines {
 		if strings.Contains(line, "@bob.bsky.social") {
-			if strings.HasPrefix(line, "  @bob.bsky.social") {
+			if strings.HasPrefix(line, "  [") {
 				foundReply = true
 				break
 			}

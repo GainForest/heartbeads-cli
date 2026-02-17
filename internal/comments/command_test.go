@@ -160,11 +160,11 @@ func TestGetNoArgsDefaultLimit(t *testing.T) {
 
 	output := buf.String()
 
-	// Count occurrences of "@" at start of lines (each comment starts with @handle)
+	// Count occurrences of "[" at start of lines (each comment starts with [nodeID])
 	lines := strings.Split(output, "\n")
 	commentCount := 0
 	for _, line := range lines {
-		if strings.HasPrefix(line, "@") {
+		if strings.HasPrefix(line, "[") {
 			commentCount++
 		}
 	}
@@ -251,11 +251,11 @@ func TestGetWithBeadsIDNoLimit(t *testing.T) {
 
 	output := buf.String()
 
-	// Count occurrences of "@" at start of lines
+	// Count occurrences of "[" at start of lines (each comment starts with [nodeID])
 	lines := strings.Split(output, "\n")
 	commentCount := 0
 	for _, line := range lines {
-		if strings.HasPrefix(line, "@") {
+		if strings.HasPrefix(line, "[") {
 			commentCount++
 		}
 	}
@@ -294,11 +294,11 @@ func TestGetWithNFlag(t *testing.T) {
 
 	output := buf.String()
 
-	// Count occurrences of "@" at start of lines
+	// Count occurrences of "[" at start of lines (each comment starts with [nodeID])
 	lines := strings.Split(output, "\n")
 	commentCount := 0
 	for _, line := range lines {
-		if strings.HasPrefix(line, "@") {
+		if strings.HasPrefix(line, "[") {
 			commentCount++
 		}
 	}

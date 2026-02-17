@@ -34,12 +34,17 @@ func FormatText(w io.Writer, comments []BeadsComment) {
 func formatComment(w io.Writer, comment BeadsComment, depth int) {
 	indent := strings.Repeat(" ", depth*2)
 
-	// Header line
+	// Header line: [nodeID] (↩ reply · ) DisplayName @handle (createdAt)
+	replyIndicator := ""
+	if comment.ReplyTo != "" {
+		replyIndicator = "↩ reply · "
+	}
+
 	var header string
 	if comment.DisplayName != "" {
-		header = fmt.Sprintf("%s%s @%s (%s)", indent, comment.DisplayName, comment.Handle, comment.CreatedAt)
+		header = fmt.Sprintf("%s[%s] %s%s @%s (%s)", indent, comment.NodeID, replyIndicator, comment.DisplayName, comment.Handle, comment.CreatedAt)
 	} else {
-		header = fmt.Sprintf("%s@%s (%s)", indent, comment.Handle, comment.CreatedAt)
+		header = fmt.Sprintf("%s[%s] %s@%s (%s)", indent, comment.NodeID, replyIndicator, comment.Handle, comment.CreatedAt)
 	}
 
 	// Add likes if > 0
