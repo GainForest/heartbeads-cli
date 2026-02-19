@@ -97,7 +97,7 @@ install_from_source() {
 check_bd() {
   if ! command -v bd &>/dev/null; then
     warn "bd (beads) not found in PATH"
-    warn "Install it from https://github.com/gainforest/beads"
+    warn "Install it from https://github.com/steveyegge/beads"
     warn "hb requires bd to function"
     return
   fi

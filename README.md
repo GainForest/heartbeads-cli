@@ -188,7 +188,7 @@ After migration:
 - JSONL files are regenerated from dolt on each commit via hooks
 - `hb sync` is a no-op — changes persist automatically
 
-> **Requires beads v0.50+.** Run `bd --version` to check. If you see `backend: sqlite` in `.beads/metadata.json`, migration is needed.
+> **Requires beads v0.50+.** Run `bd version` to check. If you see `backend: sqlite` in `.beads/metadata.json`, migration is needed.
 
 ## For AI agents
 

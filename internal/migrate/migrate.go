@@ -36,14 +36,28 @@ func DetectBackend(beadsDir string) string {
 	return "unknown"
 }
 
-// NeedsMigration returns true if the backend is not "dolt".
+// NeedsMigration returns true if the backend is sqlite or jsonl (known old backends).
+// "unknown" backends do not trigger migration.
 func NeedsMigration(beadsDir string) bool {
-	return DetectBackend(beadsDir) != "dolt"
+	backend := DetectBackend(beadsDir)
+	return backend == "sqlite" || backend == "jsonl"
 }
 
 // RunMigration performs the migration from the current backend to dolt.
 // It prints status, runs the appropriate bd commands, and verifies the result.
 func RunMigration(ctx context.Context, w io.Writer, beadsDir string, dryRun bool) error {
+	// Change to the project root (parent of .beads/) so that bd commands run
+	// in the correct directory regardless of the caller's working directory.
+	projectRoot := filepath.Dir(beadsDir)
+	origDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+	if err := os.Chdir(projectRoot); err != nil {
+		return fmt.Errorf("cannot change to project directory %q: %w", projectRoot, err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
 	backend := DetectBackend(beadsDir)
 	_, _ = fmt.Fprintf(w, "Current backend: %s\n", backend)
 

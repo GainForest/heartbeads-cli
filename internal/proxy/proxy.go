@@ -81,7 +81,7 @@ func findBeadsDirBestEffort() string {
 func SyncAction(ctx context.Context, cmd *cli.Command) error {
 	beadsDir := findBeadsDirBestEffort()
 	if beadsDir != "" && migrate.DetectBackend(beadsDir) == "dolt" {
-		_, _ = fmt.Fprintln(cmd.Root().Writer, "Note: hb sync is a no-op with dolt backend. Changes are persisted automatically.")
+		_, _ = fmt.Fprintln(os.Stderr, "Note: hb sync is a no-op with dolt backend. Changes are persisted automatically.")
 	}
 	args := append([]string{cmd.Name}, cmd.Args().Slice()...)
 	return ExecBd(ctx, cmd.Root().Writer, args)
@@ -109,7 +109,7 @@ func BuildProxyCommands() []*cli.Command {
 		{"dep", "Manage dependencies"},
 
 		// Sync (note: bd sync is a no-op with dolt backend — changes are persisted automatically)
-		{"sync", "Sync with git (no-op with dolt backend; changes are persisted automatically)"},
+		{"sync", "Sync with git"},
 		{"export", "Export issues to JSONL"},
 		{"import", "Import issues from JSONL"},
 
