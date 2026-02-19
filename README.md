@@ -158,7 +158,7 @@ hb epic create "Epic title"
 hb children <parent-id>
 
 # Sync
-hb sync                           # Sync with git
+hb sync                           # Sync with git (no-op with dolt backend)
 hb export                         # Export to JSONL
 
 # Quick capture

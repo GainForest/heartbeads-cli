@@ -56,7 +56,7 @@ func ProxyAction(ctx context.Context, cmd *cli.Command) error {
 // SyncAction proxies bd sync but also prints an informational note about
 // the no-op behavior when using the dolt backend.
 func SyncAction(ctx context.Context, cmd *cli.Command) error {
-	fmt.Fprintln(cmd.Root().Writer, "Note: bd sync is a no-op with dolt backend. Changes are persisted automatically.")
+	fmt.Fprintln(cmd.Root().Writer, "Note: hb sync is a no-op with dolt backend. Changes are persisted automatically.")
 	args := append([]string{cmd.Name}, cmd.Args().Slice()...)
 	return ExecBd(ctx, cmd.Root().Writer, args)
 }
