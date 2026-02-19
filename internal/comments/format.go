@@ -17,7 +17,7 @@ import (
 // Empty comments list: write "No comments found.\n"
 func FormatText(w io.Writer, comments []BeadsComment) {
 	if len(comments) == 0 {
-		fmt.Fprint(w, "No comments found.\n")
+		_, _ = fmt.Fprint(w, "No comments found.\n")
 		return
 	}
 
@@ -25,7 +25,7 @@ func FormatText(w io.Writer, comments []BeadsComment) {
 		formatComment(w, comment, 0)
 		// Blank line between root comments (not after the last one)
 		if i < len(comments)-1 {
-			fmt.Fprintln(w)
+			_, _ = fmt.Fprintln(w)
 		}
 	}
 }
@@ -56,11 +56,11 @@ func formatComment(w io.Writer, comment BeadsComment, depth int) {
 		}
 	}
 
-	fmt.Fprintln(w, header)
+	_, _ = fmt.Fprintln(w, header)
 
 	// Text line (indented by 2 more spaces)
 	textIndent := strings.Repeat(" ", depth*2+2)
-	fmt.Fprintf(w, "%s%s\n", textIndent, comment.Text)
+	_, _ = fmt.Fprintf(w, "%s%s\n", textIndent, comment.Text)
 
 	// Recursively format replies
 	for _, reply := range comment.Replies {

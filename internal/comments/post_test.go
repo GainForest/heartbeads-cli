@@ -35,7 +35,10 @@ func TestCreateComment(t *testing.T) {
 			CID: "bafytest123",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer srv.Close()
 
@@ -102,7 +105,10 @@ func TestCreateCommentReply(t *testing.T) {
 			CID: "bafyreply456",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer srv.Close()
 
@@ -147,7 +153,10 @@ func TestCreateCommentNoReplyTo(t *testing.T) {
 			CID: "bafytest123",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer srv.Close()
 

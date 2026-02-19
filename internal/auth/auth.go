@@ -40,7 +40,7 @@ func PersistSession(sess *Session) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	authBytes, err := json.MarshalIndent(sess, "", "  ")
 	if err != nil {
@@ -143,7 +143,7 @@ func RequireAuth() (*Session, error) {
 	sess, err := LoadSessionFile()
 	if err != nil {
 		if errors.Is(err, ErrNoAuthSession) {
-			return nil, fmt.Errorf("Not logged in. Run: hb account login --username <handle> --password <app-password>")
+			return nil, fmt.Errorf("not logged in. Run: hb account login --username <handle> --password <app-password>")
 		}
 		return nil, fmt.Errorf("failed to load auth session: %w", err)
 	}

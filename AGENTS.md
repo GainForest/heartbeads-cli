@@ -16,8 +16,10 @@ hb ready              # Find available work
 hb show <id>          # View issue details
 hb update <id> --status in_progress  # Claim work
 hb close <id> --reason "<commit-hash> <message>"  # Complete work (reason required)
-hb sync               # Sync with git
+hb sync               # Sync with git (no-op with dolt backend)
 ```
+
+> **Note:** If this repo uses old beads (SQLite), run `hb migrate` first to migrate to the dolt backend.
 
 Note: hb automatically sets --actor and --assignee (on update) to your ATProto handle. `hb close` requires `--reason` with a commit reference (`"<hash> <message>"`).
 
@@ -33,10 +35,10 @@ Note: hb automatically sets --actor and --assignee (on update) to your ATProto h
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   hb sync
    git push
    git status  # MUST show "up to date with origin"
    ```
+   > **Note:** `hb sync` is no longer required — changes are persisted automatically by the dolt backend. `git push` is still needed for JSONL portability (exported via pre-commit/post-merge hooks).
 5. **Clean up** - Clear stashes, prune remote branches
 6. **Verify** - All changes committed AND pushed
 7. **Hand off** - Provide context for next session

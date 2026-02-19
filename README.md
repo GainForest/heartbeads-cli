@@ -14,7 +14,7 @@ Or with Go:
 go install github.com/gainforest/heartbeads-cli/cmd/hb@latest
 ```
 
-Requires [bd](https://github.com/gainforest/beads) in your PATH.
+Requires [bd](https://github.com/gainforest/beads) in your PATH. v0.50+ recommended for dolt backend features (vc, sql, dolt, mol, gate, migrate).
 
 ## Why hb?
 
@@ -48,9 +48,6 @@ hb comment add <id> "Working on this now"
 
 # 7. Close when done
 hb close <id> --reason "a1b2c3d fix: resolve the bug"
-
-# 8. Sync to git
-hb sync
 ```
 
 ## What hb does
@@ -161,7 +158,7 @@ hb epic create "Epic title"
 hb children <parent-id>
 
 # Sync
-hb sync                           # Sync with git
+hb sync                           # Sync with git (no-op with dolt backend)
 hb export                         # Export to JSONL
 
 # Quick capture
@@ -169,6 +166,29 @@ hb q "Fix the bug"                # Create + output only the ID
 ```
 
 Every `bd` command works through `hb`. Run `hb --help` for the full list.
+
+## Migration
+
+If your project uses an older version of beads (SQLite-based, with a `.beads/beads.db` file), migrate to the dolt backend with:
+
+```bash
+# Migrate the current project's .beads/ directory
+hb migrate
+
+# Migrate a specific project directory
+hb migrate --path /path/to/project
+
+# Dry run — preview what will be migrated without making changes
+hb migrate --dry-run
+```
+
+After migration:
+- `.beads/dolt/` contains the new dolt database (source of truth)
+- `.beads/beads.db` (legacy SQLite) is no longer used
+- JSONL files are regenerated from dolt on each commit via hooks
+- `hb sync` is a no-op — changes persist automatically
+
+> **Requires beads v0.50+.** Run `bd version` to check. If you see `backend: sqlite` in `.beads/metadata.json`, migration is needed.
 
 ## For AI agents
 
@@ -187,7 +207,6 @@ Quick reference:
 - `hb comment get <id>` - Read comments
 - `hb comment add <id> "text"` - Post a comment
 - `hb close <id>` - Complete work
-- `hb sync` - Sync with git
 ```
 
 Or generate it automatically:
@@ -227,6 +246,8 @@ make lint     # Run linter
 ```
 
 ## Architecture
+
+`hb` wraps `bd` (beads v0.50+), which uses a **dolt** backend for storage. Issues are persisted directly in `.beads/dolt/` — no SQLite database, no manual sync required. JSONL files (`.beads/*.jsonl`) are maintained for git portability via pre-commit/post-merge hooks.
 
 ```
 heartbeads-cli/
