@@ -79,7 +79,8 @@ func mockIndexerWithComments(t *testing.T, n int) *httptest.Server {
 
 		collection := req.Variables["collection"].(string)
 
-		if collection == CommentCollection {
+		switch collection {
+		case CommentCollection:
 			edges := make([]recordEdge, n)
 			for i := 0; i < n; i++ {
 				nodeID := fmt.Sprintf("node-%d", i+1)
@@ -107,8 +108,11 @@ func mockIndexerWithComments(t *testing.T, n int) *httptest.Server {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
-		} else if collection == LikeCollection {
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case LikeCollection:
 			// Return empty likes
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -118,7 +122,10 @@ func mockIndexerWithComments(t *testing.T, n int) *httptest.Server {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}))
 }
@@ -128,7 +135,10 @@ func mockProfileServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		actor := r.URL.Query().Get("actor")
 		profile := Profile{DID: actor, Handle: "testuser.bsky.social"}
-		json.NewEncoder(w).Encode(profile)
+		if err := json.NewEncoder(w).Encode(profile); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 }
 
@@ -185,7 +195,8 @@ func TestGetWithBeadsIDNoLimit(t *testing.T) {
 
 		collection := req.Variables["collection"].(string)
 
-		if collection == CommentCollection {
+		switch collection {
+		case CommentCollection:
 			edges := make([]recordEdge, 5)
 			for i := 0; i < 5; i++ {
 				timestamp := fmt.Sprintf("2025-01-15T10:%02d:00Z", i)
@@ -212,8 +223,11 @@ func TestGetWithBeadsIDNoLimit(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
-		} else if collection == LikeCollection {
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case LikeCollection:
 			// Return empty likes
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -223,7 +237,10 @@ func TestGetWithBeadsIDNoLimit(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}))
 	defer indexerServer.Close()

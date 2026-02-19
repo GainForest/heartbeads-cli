@@ -18,7 +18,8 @@ func TestFetchComments(t *testing.T) {
 
 		collection := req.Variables["collection"].(string)
 
-		if collection == CommentCollection {
+		switch collection {
+		case CommentCollection:
 			// Return 2 comment records for beads:test-id
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -57,8 +58,11 @@ func TestFetchComments(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
-		} else if collection == LikeCollection {
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case LikeCollection:
 			// Return 1 like for first comment
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -80,7 +84,10 @@ func TestFetchComments(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}))
 	defer indexerServer.Close()
@@ -89,12 +96,16 @@ func TestFetchComments(t *testing.T) {
 	profileServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		actor := r.URL.Query().Get("actor")
 		var profile Profile
-		if actor == "did:plc:alice" {
+		switch actor {
+		case "did:plc:alice":
 			profile = Profile{DID: "did:plc:alice", Handle: "alice.bsky.social"}
-		} else if actor == "did:plc:bob" {
+		case "did:plc:bob":
 			profile = Profile{DID: "did:plc:bob", Handle: "bob.bsky.social"}
 		}
-		json.NewEncoder(w).Encode(profile)
+		if err := json.NewEncoder(w).Encode(profile); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer profileServer.Close()
 
@@ -139,7 +150,8 @@ func TestFetchCommentsNotFound(t *testing.T) {
 
 		collection := req.Variables["collection"].(string)
 
-		if collection == CommentCollection {
+		switch collection {
+		case CommentCollection:
 			// Return comments for different beads ID
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -164,8 +176,11 @@ func TestFetchCommentsNotFound(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
-		} else if collection == LikeCollection {
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case LikeCollection:
 			// Return empty likes
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -175,7 +190,10 @@ func TestFetchCommentsNotFound(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}))
 	defer indexerServer.Close()
@@ -183,7 +201,10 @@ func TestFetchCommentsNotFound(t *testing.T) {
 	// Mock profile server
 	profileServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		profile := Profile{DID: "did:plc:alice", Handle: "alice.bsky.social"}
-		json.NewEncoder(w).Encode(profile)
+		if err := json.NewEncoder(w).Encode(profile); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer profileServer.Close()
 
@@ -209,7 +230,8 @@ func TestFetchCommentsLikesFail(t *testing.T) {
 
 		collection := req.Variables["collection"].(string)
 
-		if collection == CommentCollection {
+		switch collection {
+		case CommentCollection:
 			// Return 1 comment
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -234,8 +256,11 @@ func TestFetchCommentsLikesFail(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
-		} else if collection == LikeCollection {
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case LikeCollection:
 			// Return 500 error for likes
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -245,7 +270,10 @@ func TestFetchCommentsLikesFail(t *testing.T) {
 	// Mock profile server
 	profileServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		profile := Profile{DID: "did:plc:alice", Handle: "alice.bsky.social"}
-		json.NewEncoder(w).Encode(profile)
+		if err := json.NewEncoder(w).Encode(profile); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer profileServer.Close()
 
@@ -275,7 +303,8 @@ func TestFetchCommentsNoFilter(t *testing.T) {
 
 		collection := req.Variables["collection"].(string)
 
-		if collection == CommentCollection {
+		switch collection {
+		case CommentCollection:
 			// Return 2 comment records for beads:test-id
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -314,8 +343,11 @@ func TestFetchCommentsNoFilter(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
-		} else if collection == LikeCollection {
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case LikeCollection:
 			// Return empty likes
 			resp := graphQLResponse{
 				Data: &graphQLData{
@@ -325,7 +357,10 @@ func TestFetchCommentsNoFilter(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}))
 	defer indexerServer.Close()
@@ -334,12 +369,16 @@ func TestFetchCommentsNoFilter(t *testing.T) {
 	profileServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		actor := r.URL.Query().Get("actor")
 		var profile Profile
-		if actor == "did:plc:alice" {
+		switch actor {
+		case "did:plc:alice":
 			profile = Profile{DID: "did:plc:alice", Handle: "alice.bsky.social"}
-		} else if actor == "did:plc:bob" {
+		case "did:plc:bob":
 			profile = Profile{DID: "did:plc:bob", Handle: "bob.bsky.social"}
 		}
-		json.NewEncoder(w).Encode(profile)
+		if err := json.NewEncoder(w).Encode(profile); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer profileServer.Close()
 

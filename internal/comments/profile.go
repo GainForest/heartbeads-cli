@@ -68,7 +68,7 @@ func fetchProfile(ctx context.Context, apiURL, did string) Profile {
 	if err != nil {
 		return Profile{DID: did, Handle: did}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return Profile{DID: did, Handle: did}

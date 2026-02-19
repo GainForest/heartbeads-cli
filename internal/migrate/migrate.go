@@ -45,26 +45,26 @@ func NeedsMigration(beadsDir string) bool {
 // It prints status, runs the appropriate bd commands, and verifies the result.
 func RunMigration(ctx context.Context, w io.Writer, beadsDir string, dryRun bool) error {
 	backend := DetectBackend(beadsDir)
-	fmt.Fprintf(w, "Current backend: %s\n", backend)
+	_, _ = fmt.Fprintf(w, "Current backend: %s\n", backend)
 
 	switch backend {
 	case "dolt":
-		fmt.Fprintln(w, "Already using dolt backend, no migration needed.")
+		_, _ = fmt.Fprintln(w, "Already using dolt backend, no migration needed.")
 		return nil
 
 	case "sqlite":
-		fmt.Fprintln(w, "Migration plan: run `bd migrate --to-dolt` to convert SQLite database to Dolt.")
+		_, _ = fmt.Fprintln(w, "Migration plan: run `bd migrate --to-dolt` to convert SQLite database to Dolt.")
 		if dryRun {
-			fmt.Fprintln(w, "[dry-run] Would run: bd migrate --to-dolt")
+			_, _ = fmt.Fprintln(w, "[dry-run] Would run: bd migrate --to-dolt")
 			return nil
 		}
-		fmt.Fprintln(w, "Running: bd migrate --to-dolt")
+		_, _ = fmt.Fprintln(w, "Running: bd migrate --to-dolt")
 		stdout, stderr, exitCode, err := executor.RunBd(ctx, []string{"migrate", "--to-dolt"}, "")
 		if len(stdout) > 0 {
-			fmt.Fprint(w, string(stdout))
+			_, _ = fmt.Fprint(w, string(stdout))
 		}
 		if len(stderr) > 0 {
-			fmt.Fprint(w, string(stderr))
+			_, _ = fmt.Fprint(w, string(stderr))
 		}
 		if err != nil {
 			return fmt.Errorf("bd migrate --to-dolt failed: %w", err)
@@ -74,19 +74,19 @@ func RunMigration(ctx context.Context, w io.Writer, beadsDir string, dryRun bool
 		}
 
 	case "jsonl":
-		fmt.Fprintln(w, "Migration plan: run `bd init` to create dolt db, then `bd import -i .beads/issues.jsonl` to import existing issues.")
+		_, _ = fmt.Fprintln(w, "Migration plan: run `bd init` to create dolt db, then `bd import -i .beads/issues.jsonl` to import existing issues.")
 		if dryRun {
-			fmt.Fprintln(w, "[dry-run] Would run: bd init")
-			fmt.Fprintln(w, "[dry-run] Would run: bd import -i .beads/issues.jsonl")
+			_, _ = fmt.Fprintln(w, "[dry-run] Would run: bd init")
+			_, _ = fmt.Fprintln(w, "[dry-run] Would run: bd import -i .beads/issues.jsonl")
 			return nil
 		}
-		fmt.Fprintln(w, "Running: bd init")
+		_, _ = fmt.Fprintln(w, "Running: bd init")
 		stdout, stderr, exitCode, err := executor.RunBd(ctx, []string{"init"}, "")
 		if len(stdout) > 0 {
-			fmt.Fprint(w, string(stdout))
+			_, _ = fmt.Fprint(w, string(stdout))
 		}
 		if len(stderr) > 0 {
-			fmt.Fprint(w, string(stderr))
+			_, _ = fmt.Fprint(w, string(stderr))
 		}
 		if err != nil {
 			return fmt.Errorf("bd init failed: %w", err)
@@ -96,13 +96,13 @@ func RunMigration(ctx context.Context, w io.Writer, beadsDir string, dryRun bool
 		}
 
 		jsonlPath := filepath.Join(beadsDir, "issues.jsonl")
-		fmt.Fprintf(w, "Running: bd import -i %s\n", jsonlPath)
+		_, _ = fmt.Fprintf(w, "Running: bd import -i %s\n", jsonlPath)
 		stdout, stderr, exitCode, err = executor.RunBd(ctx, []string{"import", "-i", jsonlPath}, "")
 		if len(stdout) > 0 {
-			fmt.Fprint(w, string(stdout))
+			_, _ = fmt.Fprint(w, string(stdout))
 		}
 		if len(stderr) > 0 {
-			fmt.Fprint(w, string(stderr))
+			_, _ = fmt.Fprint(w, string(stderr))
 		}
 		if err != nil {
 			return fmt.Errorf("bd import failed: %w", err)
@@ -116,10 +116,10 @@ func RunMigration(ctx context.Context, w io.Writer, beadsDir string, dryRun bool
 	}
 
 	// Verify migration by running bd list --json and checking for valid JSON
-	fmt.Fprintln(w, "Verifying migration...")
+	_, _ = fmt.Fprintln(w, "Verifying migration...")
 	stdout, stderr, exitCode, err := executor.RunBd(ctx, []string{"list", "--json"}, "")
 	if len(stderr) > 0 {
-		fmt.Fprint(w, string(stderr))
+		_, _ = fmt.Fprint(w, string(stderr))
 	}
 	if err != nil {
 		return fmt.Errorf("verification failed: %w", err)
@@ -131,7 +131,7 @@ func RunMigration(ctx context.Context, w io.Writer, beadsDir string, dryRun bool
 	if err := json.Unmarshal(stdout, &result); err != nil {
 		return fmt.Errorf("verification failed: bd list --json did not return valid JSON: %w", err)
 	}
-	fmt.Fprintln(w, "Migration successful.")
+	_, _ = fmt.Fprintln(w, "Migration successful.")
 	return nil
 }
 
@@ -207,12 +207,12 @@ func runMigrate(ctx context.Context, cmd *cli.Command) error {
 
 	if cmd.Bool("check") {
 		backend := DetectBackend(beadsDir)
-		fmt.Fprintf(w, "Backend: %s\n", backend)
+		_, _ = fmt.Fprintf(w, "Backend: %s\n", backend)
 		if backend == "dolt" {
-			fmt.Fprintln(w, "No migration needed.")
+			_, _ = fmt.Fprintln(w, "No migration needed.")
 			return nil
 		}
-		fmt.Fprintln(w, "Migration needed.")
+		_, _ = fmt.Fprintln(w, "Migration needed.")
 		// Exit 1 to signal migration is needed
 		return cli.Exit("migration needed", 1)
 	}

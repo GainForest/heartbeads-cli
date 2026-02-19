@@ -78,8 +78,8 @@ func TestCatchallNoAuth(t *testing.T) {
 		t.Fatal("expected error for unknown command without auth")
 	}
 
-	if !strings.Contains(err.Error(), "Not logged in") {
-		t.Errorf("expected 'Not logged in' error, got: %v", err)
+	if !strings.Contains(err.Error(), "not logged in") {
+		t.Errorf("expected 'not logged in' error, got: %v", err)
 	}
 }
 
@@ -107,8 +107,8 @@ func TestProxyAction_NotLoggedIn(t *testing.T) {
 		t.Fatal("expected error when not logged in")
 	}
 
-	if !strings.Contains(err.Error(), "Not logged in") {
-		t.Errorf("expected 'Not logged in' error, got: %v", err)
+	if !strings.Contains(err.Error(), "not logged in") {
+		t.Errorf("expected 'not logged in' error, got: %v", err)
 	}
 }
 
@@ -221,7 +221,7 @@ func TestCommentGetNoAuth(t *testing.T) {
 	}
 
 	errMsg := err.Error()
-	if strings.Contains(errMsg, "Not logged in") || strings.Contains(errMsg, "auth") {
+	if strings.Contains(errMsg, "not logged in") || strings.Contains(errMsg, "auth") {
 		t.Errorf("comment get should not require auth, got: %v", err)
 	}
 	if strings.Contains(errMsg, "usage") {

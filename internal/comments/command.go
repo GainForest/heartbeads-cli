@@ -111,7 +111,7 @@ func runCommentsGet(ctx context.Context, cmd *cli.Command) error {
 	opts := FetchOptions{
 		BeadsID: beadsID,
 		Pattern: filter,
-		Limit:   int(limit),
+		Limit:   limit,
 	}
 
 	// Default limit: 10 when no beads-id and no explicit -n flag was set
