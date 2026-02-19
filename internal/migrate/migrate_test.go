@@ -120,3 +120,51 @@ func TestNeedsMigration_JSONL(t *testing.T) {
 		t.Error("NeedsMigration() = false for jsonl backend, want true")
 	}
 }
+
+// TestResolveBeadsDir_PathFlag verifies that --path resolves to the correct beadsDir.
+func TestResolveBeadsDir_PathFlag(t *testing.T) {
+	tmp := t.TempDir()
+	beadsDir := filepath.Join(tmp, ".beads")
+	if err := os.MkdirAll(beadsDir, 0o755); err != nil {
+		t.Fatalf("failed to create .beads dir: %v", err)
+	}
+
+	// --path points to the project root (parent of .beads)
+	got, err := resolveBeadsDir(tmp)
+	if err != nil {
+		t.Fatalf("resolveBeadsDir(%q) error: %v", tmp, err)
+	}
+	if got != beadsDir {
+		t.Errorf("resolveBeadsDir(%q) = %q, want %q", tmp, got, beadsDir)
+	}
+
+	// --path points directly to .beads
+	got2, err := resolveBeadsDir(beadsDir)
+	if err != nil {
+		t.Fatalf("resolveBeadsDir(%q) error: %v", beadsDir, err)
+	}
+	if got2 != beadsDir {
+		t.Errorf("resolveBeadsDir(%q) = %q, want %q", beadsDir, got2, beadsDir)
+	}
+}
+
+// TestResolveBeadsDir_Empty verifies that an empty path falls back to walk-up behaviour.
+// We just check that it returns an error when there is no .beads in the tree
+// (the temp dir is not in the cwd hierarchy).
+func TestResolveBeadsDir_Empty(t *testing.T) {
+	// Change cwd to a temp dir that has no .beads ancestor.
+	tmp := t.TempDir()
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+
+	_, err = resolveBeadsDir("")
+	if err == nil {
+		t.Error("resolveBeadsDir(\"\") expected error when no .beads found, got nil")
+	}
+}

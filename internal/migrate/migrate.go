@@ -155,11 +155,36 @@ func findBeadsDir() (string, error) {
 	return "", fmt.Errorf("no .beads directory found in current or parent directories")
 }
 
+// resolveBeadsDir returns the beads directory to use.
+// If pathFlag is non-empty, it is used as the project directory:
+//   - if it already ends with ".beads", it is used directly.
+//   - otherwise, the ".beads" subdirectory is used.
+//
+// If pathFlag is empty, the existing walk-up behaviour is used.
+func resolveBeadsDir(pathFlag string) (string, error) {
+	if pathFlag == "" {
+		return findBeadsDir()
+	}
+	// Normalise the provided path.
+	abs, err := filepath.Abs(pathFlag)
+	if err != nil {
+		return "", fmt.Errorf("invalid --path %q: %w", pathFlag, err)
+	}
+	if filepath.Base(abs) == ".beads" {
+		return abs, nil
+	}
+	return filepath.Join(abs, ".beads"), nil
+}
+
 // CmdMigrate is the migrate subcommand.
 var CmdMigrate = &cli.Command{
 	Name:  "migrate",
 	Usage: "Migrate from old beads backend to dolt",
 	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "path",
+			Usage: "Path to the project directory (or its .beads/ subdirectory); defaults to walking up from cwd",
+		},
 		&cli.BoolFlag{
 			Name:  "check",
 			Usage: "Only check if migration is needed; exit 1 if migration is needed",
@@ -175,7 +200,7 @@ var CmdMigrate = &cli.Command{
 func runMigrate(ctx context.Context, cmd *cli.Command) error {
 	w := cmd.Root().Writer
 
-	beadsDir, err := findBeadsDir()
+	beadsDir, err := resolveBeadsDir(cmd.String("path"))
 	if err != nil {
 		return err
 	}
