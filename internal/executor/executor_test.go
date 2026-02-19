@@ -107,6 +107,92 @@ func TestRewriteOutput(t *testing.T) {
 			input: "BEADS_DB=/tmp/test.db ./bd create",
 			want:  "BEADS_DB=/tmp/test.db ./hb create",
 		},
+		// New dolt-backend commands
+		{
+			name:  "bd vc command start of line",
+			input: "bd vc status",
+			want:  "hb vc status",
+		},
+		{
+			name:  "bd vc in backticks",
+			input: "Run `bd vc` to check version control",
+			want:  "Run `hb vc` to check version control",
+		},
+		{
+			name:  "bd dolt command start of line",
+			input: "bd dolt log",
+			want:  "hb dolt log",
+		},
+		{
+			name:  "bd dolt in backticks",
+			input: "Use `bd dolt` for dolt operations",
+			want:  "Use `hb dolt` for dolt operations",
+		},
+		{
+			name:  "bd mol command start of line",
+			input: "bd mol list",
+			want:  "hb mol list",
+		},
+		{
+			name:  "bd mol in backticks",
+			input: "Run `bd mol` to manage molecules",
+			want:  "Run `hb mol` to manage molecules",
+		},
+		{
+			name:  "bd sql command start of line",
+			input: "bd sql query",
+			want:  "hb sql query",
+		},
+		{
+			name:  "bd sql in backticks",
+			input: "Use `bd sql` to run queries",
+			want:  "Use `hb sql` to run queries",
+		},
+		{
+			name:  "bd gate command start of line",
+			input: "bd gate check",
+			want:  "hb gate check",
+		},
+		{
+			name:  "bd gate in backticks",
+			input: "Run `bd gate` to check gates",
+			want:  "Run `hb gate` to check gates",
+		},
+		{
+			name:  "bd migrate command start of line",
+			input: "bd migrate --from sqlite",
+			want:  "hb migrate --from sqlite",
+		},
+		{
+			name:  "bd migrate in backticks",
+			input: "Run `bd migrate` to migrate your data",
+			want:  "Run `hb migrate` to migrate your data",
+		},
+		{
+			name:  "bd migrate in prose",
+			input: "use bd migrate to upgrade",
+			want:  "use hb migrate to upgrade",
+		},
+		{
+			name:  "issue ID preserved with new commands nearby",
+			input: "bd vc shows bd-w382l status",
+			want:  "hb vc shows bd-w382l status",
+		},
+		{
+			name:  "JSON with new command names preserved",
+			input: `{"command":"bd vc","result":"ok"}`,
+			want:  `{"command":"bd vc","result":"ok"}`,
+		},
+		{
+			name:  "indented bd vc usage line",
+			input: "  bd vc [options]",
+			want:  "  hb vc [options]",
+		},
+		{
+			name:  "indented bd migrate usage line",
+			input: "  bd migrate [flags]",
+			want:  "  hb migrate [flags]",
+		},
 	}
 
 	for _, tt := range tests {
