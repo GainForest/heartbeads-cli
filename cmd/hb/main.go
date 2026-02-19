@@ -21,7 +21,7 @@ var Version = "dev"
 
 func main() {
 	if err := run(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -93,7 +93,7 @@ func maybeNudgeMigrate(args []string) {
 		_ = os.WriteFile(nudgeTSPath, []byte(now.Format(time.RFC3339)), 0600)
 	}
 
-	fmt.Fprintln(os.Stderr, "⚠ This project uses the legacy beads backend. Run `hb migrate` to upgrade to dolt.")
+	_, _ = fmt.Fprintln(os.Stderr, "⚠ This project uses the legacy beads backend. Run `hb migrate` to upgrade to dolt.")
 }
 
 // findBeadsDirBestEffort walks up from cwd to find a .beads directory.

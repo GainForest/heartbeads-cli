@@ -58,8 +58,8 @@ func TestHbWithoutLogin(t *testing.T) {
 	}
 
 	errMsg := err.Error()
-	if !strings.Contains(errMsg, "Not logged in") {
-		t.Errorf("expected 'Not logged in' in error, got: %s", errMsg)
+	if !strings.Contains(errMsg, "not logged in") {
+		t.Errorf("expected 'not logged in' in error, got: %s", errMsg)
 	}
 	if !strings.Contains(errMsg, "hb account login") {
 		t.Errorf("expected 'hb account login' in error, got: %s", errMsg)

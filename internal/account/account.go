@@ -102,7 +102,7 @@ func runAccountLogin(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to persist session: %w", err)
 	}
 
-	fmt.Fprintf(cmd.Root().Writer, "Logged in as %s (%s)\n", sessResp.Handle, sessResp.Did)
+	_, _ = fmt.Fprintf(cmd.Root().Writer, "Logged in as %s (%s)\n", sessResp.Handle, sessResp.Did)
 	return nil
 }
 
@@ -111,7 +111,7 @@ func runAccountLogout(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(cmd.Root().Writer, "Logged out")
+	_, _ = fmt.Fprintln(cmd.Root().Writer, "Logged out")
 	return nil
 }
 
@@ -135,14 +135,14 @@ func runAccountStatus(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	w := cmd.Root().Writer
-	fmt.Fprintf(w, "DID:    %s\n", sessResp.Did)
-	fmt.Fprintf(w, "Handle: %s\n", sessResp.Handle)
-	fmt.Fprintf(w, "PDS:    %s\n", client.Host)
+	_, _ = fmt.Fprintf(w, "DID:    %s\n", sessResp.Did)
+	_, _ = fmt.Fprintf(w, "Handle: %s\n", sessResp.Handle)
+	_, _ = fmt.Fprintf(w, "PDS:    %s\n", client.Host)
 
 	if status.Activated {
-		fmt.Fprintln(w, "Status: active")
+		_, _ = fmt.Fprintln(w, "Status: active")
 	} else {
-		fmt.Fprintln(w, "Status: deactivated")
+		_, _ = fmt.Fprintln(w, "Status: deactivated")
 	}
 
 	return nil

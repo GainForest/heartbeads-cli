@@ -169,7 +169,7 @@ func runCommentAdd(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Print success message
-	fmt.Fprintf(cmd.Root().Writer, "Comment posted: %s\n", output.URI)
+	_, _ = fmt.Fprintf(cmd.Root().Writer, "Comment posted: %s\n", output.URI)
 	return nil
 }
 
