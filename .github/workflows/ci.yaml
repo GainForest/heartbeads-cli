@@ -16,8 +16,18 @@ jobs:
         with:
           go-version: "1.25"
 
+      - name: Install ICU4C (required for beads dolt backend)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libicu-dev
+
       - name: Install bd (beads)
+        env:
+          CGO_ENABLED: "1"
         run: go install github.com/steveyegge/beads/cmd/bd@latest
+
+      - name: Verify bd version
+        run: bd version
 
       - name: Run unit tests
         run: go test ./...

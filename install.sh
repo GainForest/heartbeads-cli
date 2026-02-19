@@ -99,6 +99,20 @@ check_bd() {
     warn "bd (beads) not found in PATH"
     warn "Install it from https://github.com/gainforest/beads"
     warn "hb requires bd to function"
+    return
+  fi
+
+  # Check bd version — heartbeads-cli requires beads v0.50+ (dolt backend)
+  BD_VERSION_OUTPUT="$(bd version 2>/dev/null || true)"
+  BD_VERSION_NUM="$(printf '%s' "$BD_VERSION_OUTPUT" | grep -oE '[0-9]+\.[0-9]+' | head -1 || true)"
+  if [ -n "$BD_VERSION_NUM" ]; then
+    BD_MAJOR="$(printf '%s' "$BD_VERSION_NUM" | cut -d. -f1)"
+    BD_MINOR="$(printf '%s' "$BD_VERSION_NUM" | cut -d. -f2)"
+    if [ "$BD_MAJOR" -eq 0 ] && [ "$BD_MINOR" -lt 50 ] 2>/dev/null; then
+      warn "bd version $BD_VERSION_NUM is too old."
+      warn "heartbeads-cli requires beads v0.50+ (dolt backend). Run:"
+      warn "  go install github.com/steveyegge/beads/cmd/bd@latest"
+    fi
   fi
 }
 
