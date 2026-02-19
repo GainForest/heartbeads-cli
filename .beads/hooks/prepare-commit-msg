@@ -21,4 +21,9 @@ if ! command -v bd >/dev/null 2>&1; then
     exit 0
 fi
 
+# Graceful degradation: skip if bd doesn't support hooks run subcommand
+if ! bd hooks run --help >/dev/null 2>&1; then
+  exit 0
+fi
+
 exec bd hooks run prepare-commit-msg "$@"
