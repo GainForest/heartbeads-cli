@@ -53,6 +53,14 @@ func ProxyAction(ctx context.Context, cmd *cli.Command) error {
 	return ExecBd(ctx, cmd.Root().Writer, args)
 }
 
+// SyncAction proxies bd sync but also prints an informational note about
+// the no-op behavior when using the dolt backend.
+func SyncAction(ctx context.Context, cmd *cli.Command) error {
+	fmt.Fprintln(cmd.Root().Writer, "Note: bd sync is a no-op with dolt backend. Changes are persisted automatically.")
+	args := append([]string{cmd.Name}, cmd.Args().Slice()...)
+	return ExecBd(ctx, cmd.Root().Writer, args)
+}
+
 // BuildProxyCommands returns cli.Command entries for common bd commands.
 // Each command uses SkipFlagParsing=true so bd handles all flag parsing.
 func BuildProxyCommands() []*cli.Command {
@@ -74,8 +82,8 @@ func BuildProxyCommands() []*cli.Command {
 		// Dependencies
 		{"dep", "Manage dependencies"},
 
-		// Sync
-		{"sync", "Sync with git"},
+		// Sync (note: bd sync is a no-op with dolt backend — changes are persisted automatically)
+		{"sync", "Sync with git (no-op with dolt backend; changes are persisted automatically)"},
 		{"export", "Export issues to JSONL"},
 		{"import", "Import issues from JSONL"},
 
@@ -104,14 +112,29 @@ func BuildProxyCommands() []*cli.Command {
 		{"q", "Quick capture: create issue and output only ID"},
 		{"rename", "Rename an issue ID"},
 		{"todo", "Manage TODO items"},
+
+		// Dolt-era commands (beads v0.50+)
+		{"vc", "Dolt version control (log, diff, commit)"},
+		{"sql", "Raw SQL access to dolt database"},
+		{"dolt", "Dolt management (show, set, test, start, stop, commit, push, pull)"},
+		{"mol", "Molecule workflows"},
+		{"gate", "Gate management"},
+		{"where", "Show where beads dir is"},
+		{"validate", "Validate issue data"},
+		{"duplicate", "Mark issues as duplicates"},
+		{"supersede", "Supersede an issue"},
 	}
 
 	result := make([]*cli.Command, 0, len(commands))
 	for _, c := range commands {
+		action := ProxyAction
+		if c.name == "sync" {
+			action = SyncAction
+		}
 		result = append(result, &cli.Command{
 			Name:            c.name,
 			Usage:           c.usage,
-			Action:          ProxyAction,
+			Action:          action,
 			SkipFlagParsing: true,
 			HideHelpCommand: true,
 		})
