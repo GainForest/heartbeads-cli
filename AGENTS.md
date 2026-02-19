@@ -16,6 +16,7 @@ hb ready              # Find available work
 hb show <id>          # View issue details
 hb update <id> --status in_progress  # Claim work
 hb close <id> --reason "<commit-hash> <message>"  # Complete work (reason required)
+hb sync               # Sync with git
 ```
 
 > **Note:** If this repo uses old beads (SQLite), run `hb migrate` first to migrate to the dolt backend.

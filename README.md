@@ -14,7 +14,7 @@ Or with Go:
 go install github.com/gainforest/heartbeads-cli/cmd/hb@latest
 ```
 
-Requires [bd](https://github.com/gainforest/beads) v0.50+ in your PATH (dolt backend).
+Requires [bd](https://github.com/gainforest/beads) in your PATH. v0.50+ recommended for dolt backend features (vc, sql, dolt, mol, gate, migrate).
 
 ## Why hb?
 

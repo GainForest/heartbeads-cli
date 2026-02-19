@@ -109,9 +109,8 @@ check_bd() {
     BD_MAJOR="$(printf '%s' "$BD_VERSION_NUM" | cut -d. -f1)"
     BD_MINOR="$(printf '%s' "$BD_VERSION_NUM" | cut -d. -f2)"
     if [ "$BD_MAJOR" -eq 0 ] && [ "$BD_MINOR" -lt 50 ] 2>/dev/null; then
-      warn "bd version $BD_VERSION_NUM is too old."
-      warn "heartbeads-cli requires beads v0.50+ (dolt backend). Run:"
-      warn "  go install github.com/steveyegge/beads/cmd/bd@latest"
+      warn "heartbeads-cli works best with beads v0.50+ (dolt backend). Older versions still work for core commands."
+      warn "To upgrade: go install github.com/steveyegge/beads/cmd/bd@latest"
     fi
   fi
 }

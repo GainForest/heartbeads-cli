@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/gainforest/heartbeads-cli/internal/auth"
 	"github.com/gainforest/heartbeads-cli/internal/executor"
 	"github.com/gainforest/heartbeads-cli/internal/inject"
+	"github.com/gainforest/heartbeads-cli/internal/migrate"
 	"github.com/urfave/cli/v3"
 )
 
@@ -53,10 +55,34 @@ func ProxyAction(ctx context.Context, cmd *cli.Command) error {
 	return ExecBd(ctx, cmd.Root().Writer, args)
 }
 
-// SyncAction proxies bd sync but also prints an informational note about
-// the no-op behavior when using the dolt backend.
+// findBeadsDirBestEffort walks up from cwd to find a .beads directory.
+// Returns "" if not found or on any error.
+func findBeadsDirBestEffort() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	for {
+		candidate := filepath.Join(dir, ".beads")
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return ""
+}
+
+// SyncAction proxies bd sync and prints an informational note about
+// the no-op behavior only when using the dolt backend.
 func SyncAction(ctx context.Context, cmd *cli.Command) error {
-	fmt.Fprintln(cmd.Root().Writer, "Note: hb sync is a no-op with dolt backend. Changes are persisted automatically.")
+	beadsDir := findBeadsDirBestEffort()
+	if beadsDir != "" && migrate.DetectBackend(beadsDir) == "dolt" {
+		fmt.Fprintln(cmd.Root().Writer, "Note: hb sync is a no-op with dolt backend. Changes are persisted automatically.")
+	}
 	args := append([]string{cmd.Name}, cmd.Args().Slice()...)
 	return ExecBd(ctx, cmd.Root().Writer, args)
 }
